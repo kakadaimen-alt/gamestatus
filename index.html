@@ -1,0 +1,18 @@
+<h1 id="status">Loading...</h1>
+<a id="link" target="_blank"></a>
+
+<script>
+fetch("https://tryloser-com-default-rtdb.firebaseio.com/gameStatus.json")
+  .then(res => res.json())
+  .then(data => {
+    if (!data) return;
+
+    document.getElementById("status").innerText =
+      data.status === "running"
+        ? "✅ The game is running!"
+        : "❌ The game is offline";
+
+    document.getElementById("link").innerText = "Play Game";
+    document.getElementById("link").href = data.link;
+  });
+</script>
