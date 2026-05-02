@@ -6,8 +6,6 @@
 <title>Game Status</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
-@property --angle{syntax:'<angle>';initial-value:0deg;inherits:false;}
-
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 
 :root{
@@ -19,7 +17,6 @@
   --l600:#333333;--l700:#151515;
   --text:#eeeeee;--muted:rgba(255,255,255,0.45);
   --bdr:rgba(255,255,255,0.15);--bdrh:rgba(255,255,255,0.38);
-  --glow:rgba(255,255,255,0.22);
   --rgb-main:255,255,255;
   --eo:cubic-bezier(0.16,1,0.3,1);
   --eb:cubic-bezier(0.34,1.56,0.64,1);
@@ -34,25 +31,12 @@ body.light {
   --l600:#cccccc;--l700:#eeeeee;
   --text:#111111;--muted:rgba(0,0,0,0.5);
   --bdr:rgba(0,0,0,0.15);--bdrh:rgba(0,0,0,0.4);
-  --glow:rgba(0,0,0,0.22);
   --rgb-main:0,0,0;
 }
 
 html,body{min-height:100vh;background:var(--bg);color:var(--text);
-  font-family:'Outfit',sans-serif;overflow-x:hidden;cursor:none;
+  font-family:'Outfit',sans-serif;overflow-x:hidden;
   transition: background 0.4s var(--eo), color 0.4s var(--eo);}
-
-/* cursor */
-#cur{position:fixed;width:10px;height:10px;border-radius:50%;
-  background:var(--l300);pointer-events:none;z-index:9999;
-  transform:translate(-50%,-50%);
-  box-shadow:0 0 10px var(--l400),0 0 22px rgba(var(--rgb-main),0.35);
-  transition:width .18s var(--eb),height .18s var(--eb), background 0.4s;}
-#curR{position:fixed;width:30px;height:30px;border-radius:50%;
-  border:1px solid rgba(var(--rgb-main),0.35);pointer-events:none;z-index:9998;
-  transform:translate(-50%,-50%);transition:left .15s var(--eo),top .15s var(--eo), border-color 0.4s;}
-body:has(.game-card:hover) #cur{width:20px;height:20px;}
-body:has(.game-card:hover) #curR{width:50px;height:50px;}
 
 /* bg canvas */
 #bgc{position:fixed;inset:0;z-index:0;pointer-events:none;}
@@ -106,7 +90,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
 
 #sndbtn, #thmbtn {font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.15em;
   text-transform:uppercase;color:var(--muted);border:1px solid var(--bdr);
-  background:transparent;padding:5px 12px;border-radius:999px;cursor:none;
+  background:transparent;padding:5px 12px;border-radius:999px;cursor:pointer;
   transition:all .2s;}
 #sndbtn:hover, #thmbtn:hover {color:var(--l300);border-color:var(--bdrh);background:rgba(var(--rgb-main),.07);}
 
@@ -114,8 +98,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
 #stats{display:grid;grid-template-columns:repeat(5,1fr);
   border:1px solid var(--bdr);border-radius:16px;overflow:hidden;
   margin:2.5rem 0;background:var(--card);backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);animation:sD .8s .1s var(--eo) both;
-  box-shadow:0 0 50px rgba(var(--rgb-main),.05),inset 0 1px 0 rgba(var(--rgb-main),.04);}
+  -webkit-backdrop-filter:blur(20px);animation:sD .8s .1s var(--eo) both;}
 
 .st{padding:1.8rem 1.4rem;border-right:1px solid var(--bdr);position:relative;
   overflow:hidden;transition:background .3s;}
@@ -152,17 +135,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
 .game-card{background:var(--card);backdrop-filter:blur(22px);
   -webkit-backdrop-filter:blur(22px);padding:2rem;position:relative;
   overflow:hidden;transition:background .35s var(--eo),transform .4s var(--eb),box-shadow .4s;
-  animation:cR .6s var(--eo) both;--angle:0deg;}
-
-/* spinning border */
-.game-card::before{content:'';position:absolute;inset:-1px;border-radius:inherit;
-  padding:1px;
-  background:conic-gradient(from var(--angle),transparent 55%,
-    rgba(var(--rgb-main),.9) 70%,rgba(var(--rgb-main),.5) 78%,transparent 92%);
-  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
-  -webkit-mask-composite:destination-out;mask-composite:exclude;
-  animation:bspin 4s linear infinite;opacity:0;transition:opacity .4s;pointer-events:none;}
-@keyframes bspin{to{--angle:360deg;}}
+  animation:cR .6s var(--eo) both;}
 
 /* shimmer sweep */
 .game-card::after{content:'';position:absolute;top:0;left:-80%;width:50%;height:100%;
@@ -171,17 +144,10 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
 
 .game-card:hover{background:var(--card2);
   transform:scale(1.013) translateY(-3px);
-  box-shadow:0 0 0 1px rgba(var(--rgb-main),.18),0 24px 64px rgba(var(--rgb-main),.15),
-    0 0 100px rgba(var(--rgb-main),.06);z-index:3;}
-.game-card:hover::before{opacity:1;}
+  box-shadow:0 0 0 1px rgba(var(--rgb-main),.18),0 14px 44px rgba(var(--rgb-main),.08);z-index:3;}
 .game-card:hover::after{left:130%;}
 
-.game-card.top-game{background:rgba(var(--rgb-main),.05);}
-.tcrown{position:absolute;top:1.1rem;right:1.1rem;
-  font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;
-  letter-spacing:.18em;text-transform:uppercase;color:var(--l300);
-  background:rgba(var(--rgb-main),.1);border:1px solid rgba(var(--rgb-main),.22);
-  padding:3px 10px;border-radius:999px;}
+.game-card.top-game{background:rgba(var(--rgb-main),.03);}
 
 .cidx{font-family:'JetBrains Mono',monospace;font-size:10px;
   letter-spacing:.14em;color:rgba(var(--rgb-main),.3);
@@ -195,6 +161,8 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
   border:1px solid rgba(var(--rgb-main),.25);}
 .spill.off{background:rgba(var(--rgb-main),.05);color:rgba(var(--rgb-main),.35);
   border:1px solid rgba(var(--rgb-main),.09);}
+.spill.top{background:transparent;color:var(--text);
+  border:1px solid rgba(var(--rgb-main),.4);}
 .pdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
 .live .pdot{background:var(--text);animation:lp 2s ease-in-out infinite;}
 .off .pdot{background:rgba(var(--rgb-main),.18);}
@@ -289,8 +257,6 @@ footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--bdr);
 </head>
 <body>
 
-<div id="cur"></div>
-<div id="curR"></div>
 <canvas id="bgc"></canvas>
 <div id="rbar"></div>
 
@@ -304,9 +270,9 @@ footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--bdr);
     <div class="hr">
       <div id="clk">00:00:00</div>
       <div class="hbadges">
-        <div class="lbadge"><span class="ldot"></span>Live · 5s</div>
-        <button id="sndbtn" onclick="toggleSnd()">♪ SFX ON</button>
-        <button id="thmbtn" onclick="toggleTheme()">◑ THEME</button>
+        <div class="lbadge"><span class="ldot"></span>LIVE · 5S</div>
+        <button id="sndbtn" onclick="toggleSnd()">SFX ON</button>
+        <button id="thmbtn" onclick="toggleTheme()">THEME</button>
       </div>
     </div>
   </header>
@@ -321,8 +287,8 @@ footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--bdr);
       <div class="stsub" id="sv-psub"></div>
     </div>
     <div class="st">
-      <div class="stl">Peak Game</div>
-      <div class="stv" id="sv-peak" style="font-size:1.05rem;letter-spacing:-.01em;">—</div>
+      <div class="stl">Most Popular Game</div>
+      <div class="stv" id="sv-peak" style="font-size:1.35rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">—</div>
       <div class="stsub" id="sv-peakn"></div>
     </div>
   </div>
@@ -341,7 +307,7 @@ footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--bdr);
   <footer>
     <div class="fl">Firebase RTDB · tryloser-com · auto-refresh 5s</div>
     <div class="fr">
-      <span id="cdtxt">next in 5s</span>
+      <span id="cdtxt">NEXT IN 5S</span>
       <svg id="rsvg" viewBox="0 0 38 38">
         <circle id="rt" cx="19" cy="19" r="15"/>
         <circle id="rp" cx="19" cy="19" r="15"/>
@@ -352,20 +318,6 @@ footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--bdr);
 </div>
 
 <script>
-/* ─── CURSOR ─── */
-const cur=document.getElementById('cur');
-const curR=document.getElementById('curR');
-let mx=0,my=0,rx=0,ry=0;
-document.addEventListener('mousemove',e=>{
-  mx=e.clientX;my=e.clientY;
-  cur.style.left=mx+'px';cur.style.top=my+'px';
-});
-(function animC(){
-  rx+=(mx-rx)*.11;ry+=(my-ry)*.11;
-  curR.style.left=rx+'px';curR.style.top=ry+'px';
-  requestAnimationFrame(animC);
-})();
-
 /* ─── THEME TOGGLE ─── */
 function toggleTheme(){
   document.body.classList.toggle('light');
@@ -392,11 +344,9 @@ function toggleTheme(){
   function draw(){
     x.clearRect(0,0,W,H);
     
-    // Dynamic color based on theme
     const isLight = document.body.classList.contains('light');
     const rgb = isLight ? '0,0,0' : '255,255,255';
 
-    // ambient glows
     [[W*.12,H*.18,300,rgb,.025],[W*.88,H*.78,260,rgb,.02],
      [W*.5,H*.45,180,rgb,.015],[W*.25,H*.8,200,rgb,.015]].forEach(([bx,by,br,bc,ba])=>{
       const g=x.createRadialGradient(bx,by,0,bx,by,br);
@@ -455,7 +405,7 @@ const SFX={
 };
 function toggleSnd(){
   muted=!muted;
-  document.getElementById('sndbtn').textContent=muted?'♪ SFX OFF':'♪ SFX ON';
+  document.getElementById('sndbtn').textContent=muted?'SFX OFF':'SFX ON';
   if(!muted)SFX.click();
 }
 
@@ -479,7 +429,7 @@ setInterval(()=>{
   const pct=Math.min(el/INTV,1);
   rbar.style.width=(pct*100)+'%';
   rp.style.strokeDashoffset=CIRC*(1-pct);
-  cdtxt.textContent='next in '+Math.max(0,Math.ceil((INTV-el)/1000))+'s';
+  cdtxt.textContent='NEXT IN '+Math.max(0,Math.ceil((INTV-el)/1000))+'S';
 },120);
 
 /* ─── COUNT-UP ─── */
@@ -511,12 +461,14 @@ function buildCard(id,game,idx,isTop){
   card.style.animationDelay=(idx*.075)+'s';
 
   card.innerHTML=`
-    ${isTop?'<div class="tcrown">★ Top Game</div>':''}
     <div class="cidx">
       <span>${pad}</span>
-      <span class="spill ${running?'live':'off'}">
-        <span class="pdot"></span>${running?'LIVE':'OFFLINE'}
-      </span>
+      <div style="display:flex; gap:8px;">
+        ${isTop?'<span class="spill top">TOP GAME</span>':''}
+        <span class="spill ${running?'live':'off'}">
+          <span class="pdot"></span>${running?'LIVE':'OFFLINE'}
+        </span>
+      </div>
     </div>
     <div class="gname">${name}</div>
     <div class="psec">
@@ -529,7 +481,7 @@ function buildCard(id,game,idx,isTop){
       </div>
     </div>
     <a href="${link}" target="_blank" rel="noopener" class="playbtn">
-      <span>Play Now</span>
+      <span>JOIN</span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
            stroke-linecap="round" stroke-linejoin="round">
         <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -576,26 +528,25 @@ async function load(){
     countUp(document.getElementById('sv-players'),totalP);
     document.getElementById('sv-psub').textContent=
       online>0?`across ${online} live server${online!==1?'s':''}`:'all servers offline';
-    document.getElementById('sv-peak').textContent=peakP.toLocaleString();
-    document.getElementById('sv-peakn').textContent=peakN;
+      
+    // Fixed Peak Game Sizing - Name is big, players are small
+    document.getElementById('sv-peak').textContent=peakN;
+    document.getElementById('sv-peakn').textContent=peakP.toLocaleString() + ' players';
 
     document.getElementById('lupd').textContent=
       'Updated '+new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
 
-    // status-change SFX
     entries.forEach(([id,v])=>{
       const prev=prevSt[id];const curr=v.status||'offline';
       if(prev&&prev!==curr)curr==='running'?SFX.online():SFX.offline();
       prevSt[id]=curr;
     });
 
-    // rebuild cards
     g.innerHTML='';
     entries.forEach(([id,game],i)=>{
       g.appendChild(buildCard(id,game,i,id===peak[0]&&peakP>0));
     });
 
-    // animate bars (double RAF for layout)
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
       g.querySelectorAll('.pbfill').forEach(b=>b.style.width=b.dataset.fill+'%');
     }));
