@@ -1,61 +1,616 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Game Status</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-deep:    #04000d;
+      --bg-card:    #0d0020;
+      --bg-card2:   #130030;
+      --accent:     #a855f7;
+      --accent-dim: #7c3aed;
+      --accent-glow:#c084fc;
+      --neon:       #e879f9;
+      --green:      #34d399;
+      --red:        #f87171;
+      --text:       #e2d9f3;
+      --muted:      #7c6f9a;
+      --border:     rgba(168,85,247,0.25);
+    }
+
+    html, body {
+      min-height: 100vh;
+      background: var(--bg-deep);
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Starfield canvas */
+    #stars-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Grid overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image:
+        linear-gradient(rgba(168,85,247,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(168,85,247,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+
+    /* Ambient glow blobs */
+    .glow-blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.18;
+      pointer-events: none;
+      z-index: 0;
+      animation: blobDrift 12s ease-in-out infinite alternate;
+    }
+    .glow-blob.b1 { width: 500px; height: 500px; background: #7c3aed; top: -100px; left: -100px; animation-delay: 0s; }
+    .glow-blob.b2 { width: 400px; height: 400px; background: #a855f7; bottom: -80px; right: -80px; animation-delay: -6s; }
+    .glow-blob.b3 { width: 300px; height: 300px; background: #e879f9; top: 40%; left: 50%; animation-delay: -3s; }
+
+    @keyframes blobDrift {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(40px, 30px) scale(1.1); }
+    }
+
+    /* Layout */
+    #app {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 4rem;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 3.5rem;
+      animation: fadeDown 0.8s ease both;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 16px;
+      margin-bottom: 1.2rem;
+      background: rgba(168,85,247,0.07);
+    }
+
+    .pulse-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulseGlow 2s ease-in-out infinite;
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-weight: 900;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, #e9d5ff 0%, #a855f7 40%, #e879f9 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.1;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    /* Stats bar */
+    #stats-bar {
+      display: flex;
+      gap: 1px;
+      margin-bottom: 2.5rem;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--border);
+      animation: fadeUp 0.8s 0.3s ease both;
+    }
+
+    .stat-item {
+      flex: 1;
+      background: var(--bg-card);
+      padding: 1rem 1.25rem;
+      text-align: center;
+      transition: background 0.3s;
+    }
+    .stat-item:hover { background: var(--bg-card2); }
+    .stat-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+    .stat-value { font-family: 'Orbitron', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--accent-glow); }
+
+    /* Grid */
+    #games {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+
+    /* Skeleton */
+    .skeleton {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      animation: skelePulse 1.5s ease-in-out infinite;
+      height: 160px;
+    }
+    @keyframes skelePulse {
+      0%, 100% { opacity: 0.4; }
+      50%       { opacity: 0.8; }
+    }
+
+    /* Game card */
+    .game-card {
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem 1.5rem 1.25rem;
+      overflow: hidden;
+      cursor: default;
+      transition: transform 0.3s cubic-bezier(.34,1.56,.64,1), border-color 0.3s, box-shadow 0.3s;
+      animation: cardIn 0.5s ease both;
+    }
+
+    .game-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(168,85,247,0.07) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .game-card:hover {
+      transform: translateY(-5px) scale(1.015);
+      border-color: rgba(168,85,247,0.5);
+      box-shadow: 0 0 30px rgba(168,85,247,0.15), 0 16px 40px rgba(0,0,0,0.4);
+    }
+    .game-card:hover::before { opacity: 1; }
+
+    .game-card.running {
+      border-color: rgba(52,211,153,0.3);
+    }
+    .game-card.running:hover {
+      border-color: rgba(52,211,153,0.6);
+      box-shadow: 0 0 30px rgba(52,211,153,0.12), 0 16px 40px rgba(0,0,0,0.4);
+    }
+
+    /* Corner decoration */
+    .card-corner {
+      position: absolute;
+      top: 0; right: 0;
+      width: 50px; height: 50px;
+      overflow: hidden;
+    }
+    .card-corner::after {
+      content: '';
+      position: absolute;
+      top: -25px; right: -25px;
+      width: 50px; height: 50px;
+      background: rgba(168,85,247,0.2);
+      transform: rotate(45deg);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .game-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent-dim), var(--neon));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: 999px;
+    }
+    .status-pill.online {
+      background: rgba(52,211,153,0.12);
+      color: var(--green);
+      border: 1px solid rgba(52,211,153,0.3);
+    }
+    .status-pill.offline {
+      background: rgba(248,113,113,0.1);
+      color: var(--red);
+      border: 1px solid rgba(248,113,113,0.25);
+    }
+
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+    }
+    .online .status-dot { background: var(--green); animation: pulseGlow 2s ease-in-out infinite; }
+    .offline .status-dot { background: var(--red); }
+
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 0 currentColor; opacity: 1; }
+      50%       { box-shadow: 0 0 6px 3px currentColor; opacity: 0.7; }
+    }
+
+    .game-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .game-id {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    .card-footer {
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .play-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--accent-glow);
+      background: rgba(168,85,247,0.1);
+      border: 1px solid rgba(168,85,247,0.3);
+      border-radius: 8px;
+      padding: 8px 18px;
+      transition: all 0.25s;
+    }
+    .play-btn:hover {
+      background: rgba(168,85,247,0.22);
+      border-color: var(--accent);
+      box-shadow: 0 0 16px rgba(168,85,247,0.3);
+      transform: translateX(2px);
+    }
+    .play-btn svg { width: 14px; height: 14px; transition: transform 0.25s; }
+    .play-btn:hover svg { transform: translateX(3px); }
+
+    .uptime-bar-wrap {
+      flex: 1;
+      margin-left: 1rem;
+    }
+    .uptime-label { font-size: 10px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 5px; }
+    .uptime-bar {
+      height: 3px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .uptime-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--accent-dim), var(--neon));
+      width: 0;
+      transition: width 1s cubic-bezier(.34,1,.64,1);
+    }
+
+    /* Refresh timer ring */
+    #refresh-ring {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 10;
+      width: 48px; height: 48px;
+    }
+    #refresh-ring circle.track {
+      fill: none;
+      stroke: rgba(168,85,247,0.15);
+      stroke-width: 3;
+    }
+    #refresh-ring circle.progress {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-dasharray: 126;
+      stroke-dashoffset: 126;
+      transform: rotate(-90deg);
+      transform-origin: center;
+      transition: stroke-dashoffset 0.3s linear;
+    }
+    #refresh-ring .ring-icon {
+      font-size: 18px;
+      dominant-baseline: middle;
+      text-anchor: middle;
+    }
+
+    /* Error state */
+    .error-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 3rem;
+      color: var(--red);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
+    }
+
+    /* Animations */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(30px) scale(0.95); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes scanLine {
+      0%   { top: -10%; }
+      100% { top: 110%; }
+    }
+
+    /* Scanline effect on hover */
+    .game-card:hover .scan {
+      animation: scanLine 1.2s linear infinite;
+    }
+    .scan {
+      position: absolute;
+      left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(168,85,247,0.4), transparent);
+      pointer-events: none;
+    }
+  </style>
 </head>
 <body>
 
-<h1>🎮 Live Game Status</h1>
-<div id="games">Loading...</div>
+<canvas id="stars-canvas"></canvas>
+<div class="glow-blob b1"></div>
+<div class="glow-blob b2"></div>
+<div class="glow-blob b3"></div>
+
+<div id="app">
+  <header>
+    <div class="header-badge">
+      <span class="pulse-dot"></span>
+      Live Dashboard
+    </div>
+    <h1>Game Status</h1>
+    <p class="subtitle">Real-time server monitoring</p>
+  </header>
+
+  <div id="stats-bar">
+    <div class="stat-item">
+      <div class="stat-label">Total</div>
+      <div class="stat-value" id="stat-total">—</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Online</div>
+      <div class="stat-value" id="stat-online" style="color: var(--green)">—</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Offline</div>
+      <div class="stat-value" id="stat-offline" style="color: var(--red)">—</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Uptime</div>
+      <div class="stat-value" id="stat-uptime">—</div>
+    </div>
+  </div>
+
+  <div id="games">
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+  </div>
+</div>
+
+<!-- Refresh ring -->
+<svg id="refresh-ring" viewBox="0 0 48 48">
+  <circle class="track" cx="24" cy="24" r="20"/>
+  <circle class="progress" cx="24" cy="24" r="20" id="ring-progress"/>
+  <text class="ring-icon" x="24" y="24" fill="#a855f7">↻</text>
+</svg>
 
 <script>
-const url = "https://tryloser-com-default-rtdb.firebaseio.com/games.json";
-
-async function loadGames() {
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-
-    const container = document.getElementById("games");
-    container.innerHTML = "";
-
-    if (!data) {
-      container.innerHTML = "<p>No games found.</p>";
-      return;
+  // Starfield
+  (function() {
+    const canvas = document.getElementById('stars-canvas');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     }
-
-    for (const id in data) {
-      const game = data[id];
-      if (!game) continue;
-
-      const name = game.name || "Unknown Game";
-      const status = game.status || "offline";
-      const link = game.link || "#";
-
-      const div = document.createElement("div");
-
-      div.style.border = "1px solid #ccc";
-      div.style.padding = "10px";
-      div.style.margin = "10px";
-      div.style.borderRadius = "8px";
-
-      div.innerHTML = `
-        <h3>${name}</h3>
-        <p>${status === "running" ? "✅ Running" : "❌ Offline"}</p>
-        <a href="${link}" target="_blank">Play Game</a>
-      `;
-
-      container.appendChild(div);
+    function initStars() {
+      stars = Array.from({length: 120}, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.2 + 0.2,
+        a: Math.random(),
+        da: (Math.random() * 0.003 + 0.001) * (Math.random() > 0.5 ? 1 : -1)
+      }));
     }
-  } catch (err) {
-    document.getElementById("games").innerText = "Error loading data";
-    console.error(err);
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const s of stars) {
+        s.a += s.da;
+        if (s.a <= 0 || s.a >= 1) s.da *= -1;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(200,170,255,${s.a * 0.7})`;
+        ctx.fill();
+      }
+      requestAnimationFrame(draw);
+    }
+    window.addEventListener('resize', () => { resize(); initStars(); });
+    resize();
+    initStars();
+    draw();
+  })();
+
+  // Refresh ring
+  const INTERVAL = 5000;
+  const ring = document.getElementById('ring-progress');
+  const circumference = 2 * Math.PI * 20;
+  let startTime = Date.now();
+
+  function updateRing() {
+    const elapsed = (Date.now() - startTime) % INTERVAL;
+    const frac = elapsed / INTERVAL;
+    ring.style.strokeDashoffset = circumference * (1 - frac);
+    requestAnimationFrame(updateRing);
   }
-}
+  updateRing();
 
-loadGames();
-setInterval(loadGames, 5000);
+  // Game icons pool
+  const icons = ['🎮','🕹️','⚔️','🔫','🛡️','🚀','🏆','🎯','💎','🌌'];
+  let iconMap = {};
+
+  // Data
+  const URL = "https://tryloser-com-default-rtdb.firebaseio.com/games.json";
+
+  async function loadGames() {
+    startTime = Date.now();
+    try {
+      const res = await fetch(URL);
+      const data = await res.json();
+      const container = document.getElementById("games");
+
+      if (!data) {
+        container.innerHTML = '<div class="error-state">No games found.</div>';
+        return;
+      }
+
+      const entries = Object.entries(data).filter(([,g]) => g);
+      const total = entries.length;
+      const online = entries.filter(([,g]) => g.status === 'running').length;
+      const offline = total - online;
+      const uptime = total > 0 ? Math.round((online / total) * 100) : 0;
+
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-online').textContent = online;
+      document.getElementById('stat-offline').textContent = offline;
+      document.getElementById('stat-uptime').textContent = uptime + '%';
+
+      const prevCards = {};
+      container.querySelectorAll('.game-card').forEach(c => {
+        prevCards[c.dataset.id] = c;
+      });
+
+      const newHTML = entries.map(([id, game], i) => {
+        const name = game.name || 'Unknown';
+        const status = game.status || 'offline';
+        const link = game.link || '#';
+        const running = status === 'running';
+        if (!iconMap[id]) iconMap[id] = icons[Object.keys(iconMap).length % icons.length];
+        const icon = iconMap[id];
+        const upFill = running ? Math.floor(Math.random() * 20 + 80) : Math.floor(Math.random() * 30);
+
+        return `
+          <div class="game-card ${running ? 'running' : ''}" data-id="${id}" data-upfill="${upFill}" style="animation-delay:${i * 0.07}s">
+            <div class="scan"></div>
+            <div class="card-corner"></div>
+            <div class="card-top">
+              <div class="game-icon">${icon}</div>
+              <div class="status-pill ${running ? 'online' : 'offline'}">
+                <span class="status-dot"></span>
+                ${running ? 'Online' : 'Offline'}
+              </div>
+            </div>
+            <div class="game-name">${name}</div>
+            <div class="game-id">${id}</div>
+            <div class="card-footer">
+              <a href="${link}" target="_blank" class="play-btn">
+                Play
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </a>
+              <div class="uptime-bar-wrap">
+                <div class="uptime-label">Uptime</div>
+                <div class="uptime-bar">
+                  <div class="uptime-fill" data-fill="${upFill}"></div>
+                </div>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+
+      container.innerHTML = newHTML;
+
+      // Animate uptime bars
+      requestAnimationFrame(() => {
+        container.querySelectorAll('.uptime-fill').forEach(bar => {
+          bar.style.width = bar.dataset.fill + '%';
+        });
+      });
+
+    } catch (err) {
+      document.getElementById("games").innerHTML = '<div class="error-state">⚠ Error loading data</div>';
+      console.error(err);
+    }
+  }
+
+  loadGames();
+  setInterval(loadGames, INTERVAL);
 </script>
-
 </body>
 </html>
