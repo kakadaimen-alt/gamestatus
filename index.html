@@ -127,7 +127,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
   overflow:hidden;transition:background .35s var(--eo),transform .4s var(--eb),box-shadow .4s;
   animation:cR .6s var(--eo) both;}
 
-/* Card Background Image (Real Thumbnail) */
+/* Card Background Image */
 .card-bg {
   position:absolute; inset:0; z-index:0;
   background-size:cover; background-position:center;
@@ -206,6 +206,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
   color:var(--l300);letter-spacing:-.03em;
   text-shadow:0 0 20px rgba(var(--rgb-main),.3);transition:all .3s;}
 .game-card:hover .pnum{color:var(--l200);text-shadow:0 0 30px rgba(var(--rgb-main),.55);}
+.srv-badge { font-size:8px; background:rgba(var(--rgb-main),0.1); padding:2px 6px; border-radius:4px; margin-left:6px; vertical-align:middle; }
 
 .pbtrack{height:3px;background:rgba(var(--rgb-main),.09);border-radius:3px;overflow:hidden;}
 .pbfill{height:100%;border-radius:3px;width:0%;
@@ -438,12 +439,14 @@ function countUp(el,target){
 
 /* ─── INITIAL CARD BUILDER ─── */
 let maxP=1;
-function buildCard(id,game,idx,isTop,isOnline){
-  const name=game.name||'Unknown';
-  const link=game.link||'#';
-  const players=Math.max(0,parseInt(game.players)||0);
-  const barPct=maxP>0?Math.round((players/maxP)*100):0;
-  const pad=String(idx+1).padStart(2,'0');
+function buildCard(data, idx, isTop){
+  const {id, game, isOnline} = data;
+  const name = game.name || 'Unknown';
+  const link = game.link || '#';
+  const players = game.players || 0;
+  const servers = game.serverCount || 0;
+  const barPct = maxP > 0 ? Math.round((players / maxP) * 100) : 0;
+  const pad = String(idx + 1).padStart(2, '0');
   
   // Past Names Setup
   const pastNames = game.pastNames || [];
@@ -478,7 +481,7 @@ function buildCard(id,game,idx,isTop,isOnline){
         <div class="psec">
           <div class="phdr">
             <span class="plbl">Players</span>
-            <span class="pnum">${players.toLocaleString()}</span>
+            <span class="pnum">${players.toLocaleString()}${servers > 0 ? `<span class="srv-badge">${servers} SVRS</span>` : ''}</span>
           </div>
           <div class="pbtrack">
             <div class="pbfill" data-fill="${barPct}"></div>
@@ -511,23 +514,46 @@ function render() {
       if(gContainer.querySelector('.errmsg')) { gContainer.innerHTML = ''; }
   }
 
-  // Filter out any banned games completely from processing so they don't render
-  const entries=Object.entries(currentData).filter(([,v]) => {
+  // Strictly filter out any Banned/Deleted games
+  const entries = Object.entries(currentData).filter(([,v]) => {
       return v && !v.isBanned && !String(v.name).includes("Content Deleted");
   });
   
-  let online=0, totalP=0;
+  let online=0, totalP=0, totalServers=0;
   maxP=1;
 
-  const processed = entries.map(([id, game]) => {
-    const isOnline = (game.players > 0) && (Date.now()/1000 - game.lastUpdate < 15);
-    if(isOnline) {
-      online++; totalP += game.players;
-      if(game.players > maxP) maxP = game.players;
-    } else {
-      game.players = 0; 
+  // Process and Aggregate Multiple Servers safely
+  const processed = entries.map(([id, gameData]) => {
+    let onlinePlayers = 0;
+    let serverCount = 0;
+
+    if (gameData.servers) {
+      Object.values(gameData.servers).forEach(srv => {
+        if (Date.now()/1000 - srv.lastUpdate < 15) {
+          onlinePlayers += srv.players || 0;
+          serverCount++;
+        }
+      });
     }
-    return {id, game, isOnline};
+
+    const isOnline = serverCount > 0 && onlinePlayers > 0;
+    
+    if(isOnline) {
+      online++; 
+      totalP += onlinePlayers;
+      totalServers += serverCount;
+      if(onlinePlayers > maxP) maxP = onlinePlayers;
+    }
+
+    return {
+      id,
+      isOnline,
+      game: {
+        ...gameData,
+        players: onlinePlayers,
+        serverCount: serverCount
+      }
+    };
   });
 
   const total = processed.length;
@@ -541,7 +567,7 @@ function render() {
   countUp(document.getElementById('sv-online'), online);
   countUp(document.getElementById('sv-offline'), offline);
   countUp(document.getElementById('sv-players'), totalP);
-  document.getElementById('sv-psub').textContent = online>0?`across ${online} live server${online!==1?'s':''}`:'all servers offline';
+  document.getElementById('sv-psub').textContent = online>0?`across ${totalServers} live server${totalServers!==1?'s':''}`:'all servers offline';
       
   document.getElementById('sv-peak').textContent = peak.game.name || '—';
   document.getElementById('sv-peakn').textContent = (peak.game.players || 0).toLocaleString() + ' players';
@@ -558,14 +584,15 @@ function render() {
     let card = gContainer.querySelector(`.game-card[data-id="${data.id}"]`);
 
     if (!card) {
-      card = buildCard(data.id, data.game, i, isTop, data.isOnline);
+      card = buildCard(data, i, isTop);
       gContainer.appendChild(card);
       requestAnimationFrame(()=>requestAnimationFrame(()=>{ card.querySelector('.pbfill').style.width = barPct + '%'; }));
     } else {
-      // IN-PLACE UPDATE
+      // IN-PLACE UPDATE (No Flickering)
       const pnum = card.querySelector('.pnum');
-      const newPlayers = data.game.players.toLocaleString();
-      if (pnum.textContent !== newPlayers) pnum.textContent = newPlayers;
+      const serversHTML = data.game.serverCount > 0 ? `<span class="srv-badge">${data.game.serverCount} SVRS</span>` : '';
+      const newPlayersHTML = `${data.game.players.toLocaleString()}${serversHTML}`;
+      if (pnum.innerHTML !== newPlayersHTML) pnum.innerHTML = newPlayersHTML;
 
       const pbfill = card.querySelector('.pbfill');
       if (pbfill.dataset.fill !== String(barPct)) {
@@ -575,7 +602,6 @@ function render() {
       const idxSpan = card.querySelector('.cidx > span:first-child');
       if (idxSpan && idxSpan.textContent !== pad) idxSpan.textContent = pad;
 
-      // Update Name and Rewind
       const gnameWrapper = card.querySelector('.gname-wrapper');
       const gnameEl = gnameWrapper.querySelector('.gname');
       if (gnameEl.textContent !== data.game.name) {
@@ -639,8 +665,9 @@ function render() {
   if(firstLoad){ SFX.load(); firstLoad=false; }
 }
 
+// Event-driven Websockets
 onValue(gamesRef, snap => { currentData = snap.val() || {}; render(); });
-setInterval(render, 1000);
+setInterval(render, 1000); // 1-second failsafe check for crashes
 
 </script>
 </body>
