@@ -1,523 +1,265 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Game Status</title>
-  <style>
-    :root{
-      --bg:#050505;
-      --panel:rgba(18,18,18,.82);
-      --panel2:rgba(255,255,255,.03);
-      --text:#f5f5f5;
-      --muted:#a3a3a3;
-      --line:rgba(255,255,255,.09);
-      --line2:rgba(255,255,255,.14);
-      --good:#22c55e;
-      --bad:#ef4444;
-      --shadow:0 18px 60px rgba(0,0,0,.45);
-    }
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daimen Hub</title>
 
-    *{box-sizing:border-box;margin:0;padding:0}
-    html,body{min-height:100%}
-    body{
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:
-        radial-gradient(circle at 20% 20%, rgba(255,255,255,.08), transparent 26%),
-        radial-gradient(circle at 80% 30%, rgba(255,255,255,.06), transparent 28%),
-        radial-gradient(circle at 50% 80%, rgba(255,255,255,.05), transparent 30%),
-        linear-gradient(120deg, #050505 0%, #0b0b0b 45%, #060606 100%);
-      color:var(--text);
-      overflow-x:hidden;
-    }
-
-    body::before{
-      content:"";
-      position:fixed;
-      inset:-30%;
-      background:
-        radial-gradient(circle at 25% 25%, rgba(255,255,255,.09), transparent 20%),
-        radial-gradient(circle at 75% 30%, rgba(255,255,255,.07), transparent 18%),
-        radial-gradient(circle at 55% 75%, rgba(255,255,255,.06), transparent 22%);
-      filter: blur(30px);
-      animation: drift 18s ease-in-out infinite alternate;
-      pointer-events:none;
-      z-index:-2;
-    }
-
-    body::after{
-      content:"";
-      position:fixed;
-      inset:0;
-      background-image:
-        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
-      background-size: 42px 42px;
-      mask-image: radial-gradient(circle at center, black 58%, transparent 100%);
-      pointer-events:none;
-      z-index:-1;
-    }
-
-    @keyframes drift{
-      from{transform:translate3d(-2%, -2%, 0) scale(1)}
-      to{transform:translate3d(2%, 2%, 0) scale(1.08)}
-    }
-
-    .wrap{
-      max-width:1180px;
-      margin:0 auto;
-      padding:40px 20px 56px;
-      position:relative;
-      z-index:1;
-    }
-
-    .topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:16px;
-      margin-bottom:26px;
-      padding:18px 20px;
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:22px;
-      box-shadow:var(--shadow);
-      backdrop-filter: blur(18px);
-      transform: translateY(0);
-      animation: rise .7s ease both;
-    }
-
-    @keyframes rise{
-      from{opacity:0; transform:translateY(14px)}
-      to{opacity:1; transform:translateY(0)}
-    }
-
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:14px;
-    }
-
-    .orb{
-      width:14px;height:14px;border-radius:50%;
-      background:var(--good);
-      box-shadow:0 0 0 0 rgba(34,197,94,.35);
-      animation:pulse 1.8s ease-in-out infinite;
-    }
-
-    @keyframes pulse{
-      0%{box-shadow:0 0 0 0 rgba(34,197,94,.35)}
-      70%{box-shadow:0 0 0 12px rgba(34,197,94,0)}
-      100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}
-    }
-
-    h1{
-      font-size:clamp(1.4rem, 2.8vw, 2.2rem);
-      letter-spacing:-.04em;
-      line-height:1;
-    }
-
-    .sub{
-      color:var(--muted);
-      font-size:.95rem;
-      margin-top:4px;
-    }
-
-    .sound-btn{
-      border:1px solid var(--line2);
-      background:rgba(255,255,255,.04);
-      color:var(--text);
-      border-radius:999px;
-      padding:10px 14px;
-      cursor:pointer;
-      transition:.25s ease;
-      font-weight:600;
-      letter-spacing:.01em;
-    }
-    .sound-btn:hover{transform:translateY(-1px); background:rgba(255,255,255,.07)}
-    .sound-on{border-color:rgba(255,255,255,.22)}
-
-    .stats{
-      display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:14px;
-      margin-bottom:18px;
-      animation: rise .7s .08s ease both;
-    }
-
-    .stat{
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:18px 18px 16px;
-      box-shadow:var(--shadow);
-      backdrop-filter: blur(18px);
-      min-height:92px;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      transition:transform .25s ease, border-color .25s ease;
-    }
-    .stat:hover{transform:translateY(-2px); border-color:rgba(255,255,255,.18)}
-    .k{font-size:.8rem; color:var(--muted); letter-spacing:.14em; text-transform:uppercase; margin-bottom:8px}
-    .v{font-size:2rem; font-weight:800; letter-spacing:-.04em}
-
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-      gap:14px;
-      margin-top:18px;
-    }
-
-    .card{
-      position:relative;
-      background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.03));
-      border:1px solid var(--line);
-      border-radius:20px;
-      padding:18px;
-      box-shadow:var(--shadow);
-      backdrop-filter: blur(18px);
-      overflow:hidden;
-      transform: translateY(10px);
-      opacity:0;
-      animation: cardIn .45s ease forwards;
-      transition:transform .25s ease, border-color .25s ease, background .25s ease;
-    }
-
-    .card:hover{
-      transform: translateY(-4px);
-      border-color: rgba(255,255,255,.2);
-      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.035));
-    }
-
-    @keyframes cardIn{
-      to{opacity:1; transform: translateY(0)}
-    }
-
-    .card::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:linear-gradient(135deg, rgba(255,255,255,.08), transparent 40%);
-      opacity:0;
-      transition:opacity .25s ease;
-    }
-    .card:hover::before{opacity:1}
-
-    .head{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:14px;
-    }
-
-    .title{
-      font-size:1.02rem;
-      font-weight:800;
-      letter-spacing:-.02em;
-      word-break:break-word;
-    }
-
-    .id{
-      margin-top:4px;
-      font-size:.8rem;
-      color:var(--muted);
-      word-break:break-all;
-    }
-
-    .status{
-      display:inline-flex;
-      align-items:center;
-      gap:7px;
-      font-size:.76rem;
-      font-weight:700;
-      letter-spacing:.12em;
-      text-transform:uppercase;
-      padding:8px 10px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      white-space:nowrap;
-    }
-    .status .dot{
-      width:7px;height:7px;border-radius:50%;
-      background:currentColor;
-    }
-    .online{color:var(--good); background:rgba(34,197,94,.08); border-color:rgba(34,197,94,.18)}
-    .offline{color:var(--bad); background:rgba(239,68,68,.08); border-color:rgba(239,68,68,.18)}
-
-    .meta{
-      display:grid;
-      gap:8px;
-      margin-top:6px;
-      color:#ddd;
-      font-size:.92rem;
-    }
-    .muted{color:var(--muted)}
-
-    .footer{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      margin-top:16px;
-      padding-top:14px;
-      border-top:1px solid var(--line);
-    }
-
-    .btn{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      text-decoration:none;
-      color:var(--text);
-      border:1px solid var(--line2);
-      background:rgba(255,255,255,.04);
-      padding:10px 12px;
-      border-radius:12px;
-      font-weight:700;
-      transition:.22s ease;
-      white-space:nowrap;
-    }
-    .btn:hover{transform:translateY(-1px); background:rgba(255,255,255,.07)}
-    .arrow{font-size:1rem}
-
-    .pill{
-      font-size:.8rem;
-      color:var(--muted);
-      border:1px solid var(--line);
-      border-radius:999px;
-      padding:8px 10px;
-      background:rgba(255,255,255,.03);
-      white-space:nowrap;
-    }
-
-    .empty, .error{
-      grid-column:1/-1;
-      padding:42px 18px;
-      text-align:center;
-      color:var(--muted);
-      border:1px dashed var(--line2);
-      border-radius:20px;
-      background:rgba(255,255,255,.03);
-    }
-
-    .error{color:#ffb4b4}
-
-    .shine{
-      position:absolute;
-      inset:-60% -30%;
-      background:linear-gradient(115deg, transparent 30%, rgba(255,255,255,.08) 40%, transparent 50%);
-      transform:translateX(-60%);
-      animation: shine 8s linear infinite;
-      pointer-events:none;
-      opacity:.5;
-    }
-    @keyframes shine{
-      from{transform:translateX(-60%) rotate(8deg)}
-      to{transform:translateX(60%) rotate(8deg)}
-    }
-
-    @media (max-width: 700px){
-      .topbar,.stats{grid-template-columns:1fr}
-      .topbar{flex-direction:column; align-items:flex-start}
-      .stats{display:grid; grid-template-columns:1fr}
-      .footer{flex-direction:column; align-items:flex-start}
-      .pill{width:100%; text-align:center}
-    }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="brand">
-        <div class="orb"></div>
-        <div>
-          <h1>Game Status</h1>
-          <div class="sub">Real-time live dashboard</div>
-        </div>
-      </div>
-      <button class="sound-btn" id="soundBtn">Enable sound</button>
-    </div>
-
-    <div class="stats">
-      <div class="stat">
-        <div class="k">Total games</div>
-        <div class="v" id="totalGames">0</div>
-      </div>
-      <div class="stat">
-        <div class="k">Online</div>
-        <div class="v" id="onlineGames">0</div>
-      </div>
-      <div class="stat">
-        <div class="k">Players in game</div>
-        <div class="v" id="totalPlayers">0</div>
-      </div>
-    </div>
-
-    <div class="grid" id="games">
-      <div class="empty">Loading games...</div>
-    </div>
-  </div>
-
-<script>
-const URL = "https://tryloser-com-default-rtdb.firebaseio.com/games.json";
-const REFRESH_MS = 5000;
-const ONLINE_WINDOW_MS = 90000; // 90s to reduce false offline
-const seenGames = new Set();
-
-let audioCtx = null;
-let soundUnlocked = false;
-
-const soundBtn = document.getElementById("soundBtn");
-
-function unlockSound() {
-  if (soundUnlocked) return;
-  try {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === "suspended") audioCtx.resume();
-    soundUnlocked = true;
-    soundBtn.textContent = "Sound enabled";
-    soundBtn.classList.add("sound-on");
-  } catch (e) {}
+<style>
+:root{
+  --bg:#050505;
+  --card:#111;
+  --text:#fff;
+  --muted:#aaa;
 }
-soundBtn.addEventListener("click", unlockSound);
-document.addEventListener("pointerdown", unlockSound, { once: true });
 
-function playNotify() {
-  if (!soundUnlocked || !audioCtx) return;
+.light{
+  --bg:#f5f5f5;
+  --card:#fff;
+  --text:#000;
+  --muted:#555;
+}
 
-  const t = audioCtx.currentTime;
-  const o1 = audioCtx.createOscillator();
-  const o2 = audioCtx.createOscillator();
+body{
+  margin:0;
+  font-family:system-ui;
+  background:var(--bg);
+  color:var(--text);
+  overflow-x:hidden;
+  transition:0.4s;
+}
+
+/* SMOOTH BACKGROUND */
+body::before{
+  content:"";
+  position:fixed;
+  width:200%;
+  height:200%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08), transparent),
+    radial-gradient(circle at 70% 70%, rgba(255,255,255,0.05), transparent);
+  animation:move 20s linear infinite;
+  z-index:-1;
+}
+
+@keyframes move{
+  0%{transform:translate(0,0)}
+  100%{transform:translate(-25%,-25%)}
+}
+
+/* HEADER */
+.header{
+  text-align:center;
+  padding:30px 20px;
+  font-size:28px;
+  font-weight:700;
+  animation:fade 1s ease;
+}
+
+@keyframes fade{
+  from{opacity:0;transform:translateY(-10px)}
+  to{opacity:1}
+}
+
+/* BUTTON */
+.toggle{
+  position:fixed;
+  top:20px;
+  right:20px;
+  padding:8px 12px;
+  border-radius:8px;
+  border:1px solid #333;
+  cursor:pointer;
+}
+
+/* GRID */
+.container{
+  max-width:1100px;
+  margin:auto;
+  padding:20px;
+}
+
+.stats{
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+}
+
+.stat{
+  flex:1;
+  background:var(--card);
+  padding:15px;
+  border-radius:10px;
+  text-align:center;
+}
+
+/* CARDS */
+.games{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+  gap:15px;
+}
+
+.card{
+  position:relative;
+  background:var(--card);
+  border-radius:12px;
+  padding:15px;
+  overflow:hidden;
+  transition:0.3s;
+}
+
+.card:hover{
+  transform:translateY(-5px);
+}
+
+/* BACKGROUND IMAGE */
+.bg{
+  position:absolute;
+  inset:0;
+  background-size:cover;
+  background-position:center;
+  filter:blur(20px) brightness(0.3);
+  transform:scale(1.2);
+}
+
+.content{
+  position:relative;
+  z-index:1;
+}
+
+.online{color:#4ade80}
+.offline{color:#f87171}
+
+.info{
+  font-size:12px;
+  color:var(--muted);
+}
+
+a{
+  display:inline-block;
+  margin-top:8px;
+  padding:6px 10px;
+  border:1px solid #333;
+  border-radius:6px;
+  text-decoration:none;
+  color:var(--text);
+}
+</style>
+</head>
+
+<body>
+
+<div class="toggle" onclick="toggleTheme()">Theme</div>
+
+<div class="header">✨ Daimen's Hub of Games ✨</div>
+
+<div class="container">
+
+<div class="stats">
+  <div class="stat"><b id="total">0</b><br>Total</div>
+  <div class="stat"><b id="online">0</b><br>Online</div>
+  <div class="stat"><b id="players">0</b><br>Players</div>
+</div>
+
+<div class="games" id="games"></div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const app = initializeApp({
+  databaseURL: "https://tryloser-com-default-rtdb.firebaseio.com/"
+});
+
+const db = getDatabase(app);
+const gamesRef = ref(db, "games");
+
+let seen = new Set();
+
+/* SOUND FIX */
+let audioCtx;
+document.addEventListener("click", () => {
+  audioCtx = new AudioContext();
+});
+
+function playSound(){
+  if(!audioCtx) return;
+
+  const o = audioCtx.createOscillator();
   const g = audioCtx.createGain();
 
-  o1.type = "sine";
-  o2.type = "triangle";
-  o1.frequency.setValueAtTime(880, t);
-  o2.frequency.setValueAtTime(1320, t + 0.04);
-
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(0.08, t + 0.02);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
-
-  o1.connect(g);
-  o2.connect(g);
+  o.connect(g);
   g.connect(audioCtx.destination);
 
-  o1.start(t);
-  o2.start(t + 0.04);
-  o1.stop(t + 0.18);
-  o2.stop(t + 0.24);
+  o.frequency.value = 800;
+  g.gain.value = 0.1;
+
+  o.start();
+  o.stop(audioCtx.currentTime + 0.1);
 }
 
-function formatAgo(tsSeconds) {
-  if (!tsSeconds) return "unknown";
-  const diff = Math.max(0, Date.now() - tsSeconds * 1000);
-  const s = Math.floor(diff / 1000);
-  if (s < 60) return `${s}s ago`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  return `${h}h ago`;
-}
+/* REALTIME */
+onValue(gamesRef, snap => {
+  const data = snap.val();
+  const container = document.getElementById("games");
+  container.innerHTML = "";
 
-async function loadGames() {
-  try {
-    const res = await fetch(URL, { cache: "no-store" });
-    const data = await res.json();
+  let total=0, online=0, players=0;
 
-    const container = document.getElementById("games");
-    container.innerHTML = "";
+  Object.entries(data || {}).forEach(([id,g])=>{
+    total++;
 
-    if (!data) {
-      container.innerHTML = '<div class="empty">No games found.</div>';
-      document.getElementById("totalGames").textContent = "0";
-      document.getElementById("onlineGames").textContent = "0";
-      document.getElementById("totalPlayers").textContent = "0";
-      return;
+    const isOnline = (Date.now()/1000 - g.lastUpdate) < 2;
+    if(isOnline) online++;
+
+    players += g.players || 0;
+
+    if(!seen.has(id)){
+      seen.add(id);
+      playSound();
     }
 
-    const entries = Object.entries(data).filter(([,g]) => g && typeof g === "object");
+    const img = `https://thumbnails.roblox.com/v1/games/icons?universeIds=${id}&size=512x512&format=Png`;
 
-    let totalGames = 0;
-    let onlineGames = 0;
-    let totalPlayers = 0;
+    const playerText = (g.players || 0) === 0 
+      ? "Players: 0 :( " 
+      : "Players: " + g.players;
 
-    entries.forEach(([id, g], index) => {
-      totalGames++;
+    const div = document.createElement("div");
+    div.className="card";
 
-      const lastUpdate = Number(g.lastUpdate || 0);
-      const isOnline = g.status === "running" && lastUpdate > 0 && (Date.now() - lastUpdate * 1000) <= ONLINE_WINDOW_MS;
-      if (isOnline) onlineGames++;
+    div.innerHTML = `
+      <div class="bg" style="background-image:url(${img})"></div>
+      <div class="content">
+        <div><b>${g.name}</b></div>
 
-      const players = Number(g.players || 0);
-      totalPlayers += players;
-
-      if (!seenGames.has(id)) {
-        seenGames.add(id);
-        playNotify();
-      }
-
-      const card = document.createElement("div");
-      card.className = "card";
-      card.style.animationDelay = `${Math.min(index * 0.04, 0.25)}s`;
-
-      card.innerHTML = `
-        <div class="shine"></div>
-        <div class="head">
-          <div>
-            <div class="title">${escapeHtml(g.name || "Unknown Game")}</div>
-            <div class="id">${escapeHtml(id)}</div>
-          </div>
-          <div class="status ${isOnline ? "online" : "offline"}">
-            <span class="dot"></span>
-            ${isOnline ? "Online" : "Offline"}
-          </div>
+        <div class="${isOnline?'online':'offline'}">
+          ${isOnline?"● Running":"● Offline"}
         </div>
 
-        <div class="meta">
-          <div><span class="muted">Players:</span> ${players}</div>
-          <div><span class="muted">Last update:</span> ${formatAgo(lastUpdate)}</div>
-        </div>
+        <div class="info">${playerText}</div>
 
-        <div class="footer">
-          <a class="btn" href="${escapeAttr(g.link || "#")}" target="_blank" rel="noreferrer">
-            Play <span class="arrow">→</span>
-          </a>
-          <div class="pill">${isOnline ? "Live now" : "Waiting for update"}</div>
-        </div>
-      `;
+        <a href="${g.link}" target="_blank">Play</a>
+      </div>
+    `;
 
-      container.appendChild(card);
-    });
+    container.appendChild(div);
+  });
 
-    if (!entries.length) {
-      container.innerHTML = '<div class="empty">No games found.</div>';
-    }
+  document.getElementById("total").textContent = total;
+  document.getElementById("online").textContent = online;
+  document.getElementById("players").textContent = players;
+});
 
-    document.getElementById("totalGames").textContent = totalGames;
-    document.getElementById("onlineGames").textContent = onlineGames;
-    document.getElementById("totalPlayers").textContent = totalPlayers;
-
-  } catch (err) {
-    console.error(err);
-    document.getElementById("games").innerHTML = '<div class="error">Error loading data</div>';
-  }
+/* THEME SWITCH */
+function toggleTheme(){
+  document.body.classList.toggle("light");
 }
+window.toggleTheme = toggleTheme;
 
-function escapeHtml(str) {
-  return String(str).replace(/[&<>"']/g, s => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  }[s]));
-}
-
-function escapeAttr(str) {
-  return String(str).replace(/"/g, "&quot;");
-}
-
-loadGames();
-setInterval(loadGames, REFRESH_MS);
 </script>
+
 </body>
 </html>
