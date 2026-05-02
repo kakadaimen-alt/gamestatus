@@ -1,219 +1,441 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Game Status</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daimen Hub</title>
 
 <style>
-:root{
-  --bg:#ffffff;
-  --card:#f5f5f5;
-  --card2:#eaeaea;
-  --text:#0a0a0a;
-  --muted:#777;
-  --bdr:#ddd;
-  --accent:#000;
-  --green:#22c55e;
+:root {
+  --bg: #000000;
+  --card: #151515;
+  --text: #ffffff;
+  --muted: #777777;
+  --border: #333333;
+  --accent: #ffffff;
 }
 
-body.dark{
-  --bg:#0a0a0a;
-  --card:#111;
-  --card2:#1a1a1a;
-  --text:#f5f5f5;
-  --muted:#888;
-  --bdr:#222;
-  --accent:#fff;
-  --green:#4ade80;
+.light {
+  --bg: #ffffff;
+  --card: #f5f5f5;
+  --text: #000000;
+  --muted: #888888;
+  --border: #cccccc;
+  --accent: #000000;
 }
 
-*{box-sizing:border-box;margin:0;padding:0;}
-
-body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:'Outfit',sans-serif;
-  transition:background .3s,color .3s;
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  transition: background 0.4s, color 0.4s;
 }
 
-/* header */
-header{
-  padding:2rem;
-  display:flex;
-  justify-content:space-between;
-  border-bottom:1px solid var(--bdr);
+/* BACKGROUND EFFECTS */
+#bgc {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
 }
 
-h1{
-  font-family:'Orbitron';
-  font-size:2.5rem;
+body::before {
+  content: "";
+  position: fixed;
+  width: 200%;
+  height: 200%;
+  background: 
+    radial-gradient(circle at 30% 30%, rgba(150,150,150,0.05), transparent),
+    radial-gradient(circle at 70% 70%, rgba(150,150,150,0.03), transparent);
+  animation: move 20s linear infinite;
+  z-index: -1;
+  pointer-events: none;
 }
 
-/* button */
-button{
-  border:1px solid var(--bdr);
-  background:none;
-  padding:6px 14px;
-  cursor:pointer;
+@keyframes move {
+  0% { transform: translate(0,0); }
+  100% { transform: translate(-25%,-25%); }
 }
 
-/* stats */
-#stats{
-  display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:10px;
-  padding:20px;
+/* HEADER & TOGGLE */
+.header {
+  text-align: center;
+  padding: 30px 20px;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  animation: fade 1s ease;
 }
 
-.st{
-  background:var(--card);
-  padding:20px;
-  border-radius:10px;
-  text-align:center;
+@keyframes fade {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; }
 }
 
-.stv{font-size:1.5rem;}
-
-/* games */
-#games{
-  padding:20px;
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
-  gap:15px;
+.toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 100;
+  transition: 0.3s;
+}
+.toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
-.game-card{
-  background:var(--card);
-  padding:20px;
-  border-radius:12px;
-  border:1px solid var(--bdr);
-  transition:.2s;
+/* GRID & STATS */
+.container {
+  max-width: 1100px;
+  margin: auto;
+  padding: 20px;
+  position: relative;
+  z-index: 1;
 }
 
-.game-card:hover{
-  background:var(--card2);
-  transform:translateY(-3px);
+.stats {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
-.gname{
-  font-weight:700;
-  margin-bottom:10px;
+.stat {
+  flex: 1;
+  min-width: 120px;
+  background: var(--card);
+  padding: 15px;
+  border-radius: 10px;
+  text-align: center;
+  border: 1px solid var(--border);
+  transition: 0.3s;
+}
+.stat:hover { background: var(--bg); }
+.stat b { font-size: 1.5rem; display: block; margin-bottom: 4px; }
+
+/* CARDS */
+.games {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 15px;
 }
 
-.playbtn{
-  display:block;
-  text-align:center;
-  padding:10px;
-  border:1px solid var(--bdr);
-  margin-top:10px;
-  text-decoration:none;
-  color:var(--text);
+.card {
+  position: relative;
+  background: var(--card);
+  border-radius: 12px;
+  padding: 15px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.playbtn:hover{
-  background:var(--accent);
-  color:var(--bg);
+.card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  border-color: var(--accent);
+}
+.light .card:hover { box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+
+/* BACKGROUND IMAGE */
+.bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(20px) brightness(0.2);
+  transform: scale(1.2);
+  transition: filter 0.4s;
+}
+.light .bg { filter: blur(20px) brightness(0.85); }
+.card:hover .bg { filter: blur(15px) brightness(0.3); }
+.light .card:hover .bg { filter: blur(15px) brightness(0.95); }
+
+.content {
+  position: relative;
+  z-index: 1;
 }
 
-/* footer */
-footer{
-  padding:20px;
-  text-align:center;
-  border-top:1px solid var(--bdr);
+.tcrown {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  font-size: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+  background: var(--text);
+  color: var(--bg);
+  padding: 4px 8px;
+  border-radius: 20px;
+  z-index: 2;
+  letter-spacing: 1px;
+}
+
+.online { color: var(--text); font-weight: bold; }
+.offline { color: var(--muted); }
+
+.info {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* PLAYER BAR */
+.pbtrack {
+  height: 4px;
+  background: rgba(128,128,128,0.2);
+  border-radius: 4px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.pbfill {
+  height: 100%;
+  background: var(--text);
+  border-radius: 4px;
+  width: 0%;
+  transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+a {
+  display: block;
+  text-align: center;
+  margin-top: 15px;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 12px;
+  transition: 0.3s;
+}
+a:hover {
+  background: var(--text);
+  color: var(--bg);
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  <h1>Game Status</h1>
-  <div>
-    <button onclick="toggleTheme()">Toggle Theme</button>
-    <button onclick="toggleSnd()" id="sndbtn">SFX ON</button>
-  </div>
-</header>
+<canvas id="bgc"></canvas>
 
-<div id="stats">
-  <div class="st"><div>Total</div><div id="sv-total">—</div></div>
-  <div class="st"><div>Online</div><div id="sv-online">—</div></div>
-  <div class="st"><div>Offline</div><div id="sv-offline">—</div></div>
-  <div class="st"><div>Players</div><div id="sv-players">—</div></div>
-  <div class="st"><div>Top Game</div><div id="sv-peak">—</div></div>
+<div class="toggle" onclick="toggleTheme()" id="themeBtn">Light Mode</div>
+
+<div class="header">✨ Daimen's Hub of Games ✨</div>
+
+<div class="container">
+  <div class="stats">
+    <div class="stat"><b id="total" data-v="0">0</b>Total</div>
+    <div class="stat"><b id="online" data-v="0">0</b>Online</div>
+    <div class="stat"><b id="players" data-v="0">0</b>Players</div>
+    <div class="stat"><b id="peakName">-</b>Peak Game (<span id="peakPlayers" data-v="0">0</span>)</div>
+  </div>
+
+  <div class="games" id="games"></div>
 </div>
 
-<div id="games"></div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-<footer>Auto refresh 5s</footer>
+const app = initializeApp({
+  databaseURL: "https://tryloser-com-default-rtdb.firebaseio.com/"
+});
 
-<script>
-/* THEME */
-function toggleTheme(){
-  document.body.classList.toggle('dark');
-  localStorage.setItem('theme',
-    document.body.classList.contains('dark')?'dark':'light'
-  );
+const db = getDatabase(app);
+const gamesRef = ref(db, "games");
+
+let seen = new Set();
+let prevSt = {};
+
+/* ─── WEB AUDIO SFX (Advanced Sound System) ─── */
+let AC = null, muted = false;
+function ac() { if(!AC) AC = new(window.AudioContext || window.webkitAudioContext)(); return AC; }
+
+// Initialize audio context on first user interaction
+document.body.addEventListener("click", () => {
+  if(!AC) { ac(); SFX.load(); }
+}, { once: true });
+
+function tone(f, t, d, v, delay=0) {
+  if(muted || !AC) return;
+  try {
+    const a = ac(), o = a.createOscillator(), g = a.createGain(), tm = a.currentTime + delay;
+    o.connect(g); g.connect(a.destination);
+    o.type = t; o.frequency.setValueAtTime(f, tm);
+    g.gain.setValueAtTime(0, tm);
+    g.gain.linearRampToValueAtTime(v, tm + .015);
+    g.gain.exponentialRampToValueAtTime(.0001, tm + d);
+    o.start(tm); o.stop(tm + d + .05);
+  } catch(e) {}
 }
 
-if(localStorage.getItem('theme')==='dark'){
-  document.body.classList.add('dark');
+const SFX = {
+  hover:   () => tone(1046, 'sine', .07, .022),
+  load:    () => { tone(523, 'sine', .18, .038, 0); tone(784, 'sine', .22, .038, .1); },
+  online:  () => { tone(659, 'sine', .12, .038, 0); tone(880, 'sine', .15, .038, .1); },
+  offline: () => { tone(440, 'sine', .12, .028, 0); tone(330, 'sine', .18, .028, .1); },
+  click:   () => { tone(1200, 'square', .04, .018); tone(800, 'sine', .06, .018, .02); },
+};
+
+/* ─── COUNT-UP ANIMATION ─── */
+function countUp(el, target) {
+  const prev = parseInt(el.dataset.v || '0');
+  el.dataset.v = target;
+  if(prev === target) { el.textContent = target.toLocaleString(); return; }
+  const dur = 650, t0 = performance.now();
+  (function s(now) {
+    const p = Math.min((now - t0) / dur, 1), e = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(prev + (target - prev) * e).toLocaleString();
+    if(p < 1) requestAnimationFrame(s); else el.textContent = target.toLocaleString();
+  })(t0);
 }
 
-/* SOUND */
-let muted=false;
-function toggleSnd(){
-  muted=!muted;
-  sndbtn.textContent=muted?'SFX OFF':'SFX ON';
-}
+/* ─── PARTICLES (Black & White Theme) ─── */
+(() => {
+  const c = document.getElementById('bgc');
+  const x = c.getContext('2d');
+  let W, H, pts = [];
+  const N = 80, L = 150;
 
-/* COUNT UP */
-function countUp(el,target){
-  el.textContent=target.toLocaleString();
-}
-
-/* BUILD CARD */
-function buildCard(game){
-  return `
-  <div class="game-card">
-    <div class="gname">${game.name}</div>
-    <div>${game.players} players</div>
-    <a class="playbtn" href="${game.link}" target="_blank">Play</a>
-  </div>`;
-}
-
-/* FETCH */
-const DB='https://tryloser-com-default-rtdb.firebaseio.com/games.json';
-
-async function load(){
-  try{
-    const data=await(await fetch(DB)).json();
-    const entries=Object.values(data||{});
-
-    let total=entries.length;
-    let online=entries.filter(g=>g.status==='running').length;
-    let offline=total-online;
-    let players=entries.reduce((a,b)=>a+(b.players||0),0);
-
-    let peak=entries.sort((a,b)=>(b.players||0)-(a.players||0))[0];
-
-    countUp(sv-total,total);
-    countUp(sv-online,online);
-    countUp(sv-offline,offline);
-    countUp(sv-players,players);
-    sv-peak.textContent=peak?peak.name:'—';
-
-    games.innerHTML=entries.map(buildCard).join('');
-
-  }catch(e){
-    games.innerHTML="Error loading";
+  function resize() { W = c.width = innerWidth; H = c.height = innerHeight; }
+  function P() {
+    this.x = Math.random() * W; this.y = Math.random() * H;
+    this.vx = (Math.random() - .5) * .5; this.vy = (Math.random() - .5) * .5;
+    this.r = Math.random() * 1.5 + 0.5;
   }
-}
+  function init() { pts = Array.from({length: N}, () => new P()); }
+  function draw() {
+    x.clearRect(0, 0, W, H);
+    // Determine color based on theme
+    const isLight = document.body.classList.contains('light');
+    const colorRGB = isLight ? '0,0,0' : '255,255,255';
 
-load();
-setInterval(load,5000);
+    for(let i=0; i<pts.length; i++) {
+      const p = pts[i];
+      p.x += p.vx; p.y += p.vy;
+      if(p.x < 0 || p.x > W) p.vx *= -1;
+      if(p.y < 0 || p.y > H) p.vy *= -1;
+      
+      for(let j = i + 1; j < pts.length; j++) {
+        const q = pts[j];
+        const d = Math.hypot(p.x - q.x, p.y - q.y);
+        if(d < L) {
+          x.beginPath(); x.moveTo(p.x, p.y); x.lineTo(q.x, q.y);
+          x.strokeStyle = `rgba(${colorRGB}, ${(1 - d/L) * 0.15})`;
+          x.lineWidth = 0.5; x.stroke();
+        }
+      }
+      x.beginPath(); x.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      x.fillStyle = `rgba(${colorRGB}, 0.3)`; x.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize', () => { resize(); init(); });
+  resize(); init(); draw();
+})();
+
+/* ─── REALTIME FIREBASE SYNC ─── */
+onValue(gamesRef, snap => {
+  const data = snap.val() || {};
+  const container = document.getElementById("games");
+  
+  let total=0, online=0, players=0;
+  let maxP=1, peakP=0, peakN="—", peakId=null;
+
+  // First pass: Find peak and maximums for scaling
+  Object.entries(data).forEach(([id, g]) => {
+    const p = g.players || 0;
+    if(p > maxP) maxP = p;
+    if(p > peakP) { peakP = p; peakN = g.name || "Unknown"; peakId = id; }
+  });
+
+  container.innerHTML = "";
+
+  Object.entries(data).forEach(([id, g]) => {
+    total++;
+    const isOnline = (Date.now() / 1000 - g.lastUpdate) < 2;
+    if(isOnline) online++;
+    
+    const p = g.players || 0;
+    players += p;
+
+    // Advanced Sound Trigger on state change
+    const currState = isOnline ? 'running' : 'offline';
+    if(prevSt[id] && prevSt[id] !== currState) {
+      if(currState === 'running') SFX.online(); else SFX.offline();
+    }
+    prevSt[id] = currState;
+    if(!seen.has(id)) { seen.add(id); SFX.click(); }
+
+    const isTop = (id === peakId && peakP > 0);
+    const barPct = maxP > 0 ? Math.round((p / maxP) * 100) : 0;
+    const img = `https://thumbnails.roblox.com/v1/games/icons?universeIds=${id}&size=512x512&format=Png`;
+
+    const div = document.createElement("div");
+    div.className = "card";
+
+    div.innerHTML = `
+      ${isTop ? '<div class="tcrown">★ Top Game</div>' : ''}
+      <div class="bg" style="background-image:url(${img})"></div>
+      <div class="content">
+        <div style="font-size: 1.1rem; margin-bottom: 5px;"><b>${g.name}</b></div>
+
+        <div class="${isOnline ? 'online' : 'offline'}">
+          ${isOnline ? "● Running" : "○ Offline"}
+        </div>
+
+        <div class="info">
+          <span>Players</span>
+          <b style="color:var(--text); font-size:14px;">${p.toLocaleString()}</b>
+        </div>
+        
+        <div class="pbtrack">
+          <div class="pbfill" style="width: ${barPct}%"></div>
+        </div>
+
+        <a href="${g.link}" target="_blank">Play Now</a>
+      </div>
+    `;
+
+    // Apply interaction sounds
+    div.addEventListener('mouseenter', () => SFX.hover());
+    div.querySelector('a').addEventListener('mouseenter', () => SFX.click());
+
+    container.appendChild(div);
+  });
+
+  // Animate stats
+  countUp(document.getElementById("total"), total);
+  countUp(document.getElementById("online"), online);
+  countUp(document.getElementById("players"), players);
+  document.getElementById("peakName").textContent = peakN;
+  countUp(document.getElementById("peakPlayers"), peakP);
+});
+
+/* ─── THEME SWITCH ─── */
+function toggleTheme() {
+  document.body.classList.toggle("light");
+  const isLight = document.body.classList.contains("light");
+  document.getElementById("themeBtn").textContent = isLight ? "Dark Mode" : "Light Mode";
+  SFX.click();
+}
+window.toggleTheme = toggleTheme;
+
 </script>
 
 </body>
