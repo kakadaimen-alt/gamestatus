@@ -1,697 +1,224 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Game Status</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Monitor</title>
 
-    :root {
-      --black:   #080808;
-      --white:   #f8f8f6;
-      --gray-1:  #f0f0ee;
-      --gray-2:  #e0e0dc;
-      --gray-3:  #b0b0aa;
-      --gray-4:  #707070;
-      --gray-5:  #3a3a3a;
-      --live:    #080808;
-      --dead:    #b0b0aa;
-      --font-d:  'Syne', sans-serif;
-      --font-m:  'JetBrains Mono', monospace;
-      --ease-o:  cubic-bezier(0.16, 1, 0.3, 1);
-      --ease-b:  cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
+<style>
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #050505;
+  color: white;
+  overflow-x: hidden;
+}
 
-    html { scroll-behavior: smooth; }
+/* animated gradient background */
+body::before {
+  content: "";
+  position: fixed;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 30% 30%, #111 0%, transparent 40%),
+              radial-gradient(circle at 70% 70%, #111 0%, transparent 40%);
+  animation: moveBg 20s linear infinite;
+  z-index: -1;
+}
 
-    body {
-      background: var(--white);
-      color: var(--black);
-      font-family: var(--font-d);
-      min-height: 100vh;
-      cursor: default;
-    }
+@keyframes moveBg {
+  0% { transform: translate(0,0); }
+  100% { transform: translate(-25%, -25%); }
+}
 
-    /* ── Refresh bar ── */
-    #refresh-bar {
-      position: fixed;
-      top: 0; left: 0;
-      height: 2px;
-      background: var(--black);
-      width: 0%;
-      z-index: 100;
-      transition: width 0.25s linear;
-    }
+.container {
+  max-width: 1100px;
+  margin: auto;
+  padding: 40px 20px;
+}
 
-    /* ── Page wrapper ── */
-    #app {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 0 2rem 6rem;
-    }
+h1 {
+  font-size: 28px;
+  margin-bottom: 20px;
+}
 
-    /* ── Header ── */
-    header {
-      padding: 3.5rem 0 2.5rem;
-      border-bottom: 1px solid var(--gray-2);
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 2rem;
-      animation: slideDown 0.7s var(--ease-o) both;
-    }
+.stats {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+}
 
-    .header-left h1 {
-      font-size: clamp(2.8rem, 6vw, 5rem);
-      font-weight: 800;
-      letter-spacing: -0.04em;
-      line-height: 0.92;
-      color: var(--black);
-    }
+.stat {
+  flex: 1;
+  background: #0f0f0f;
+  padding: 15px;
+  border-radius: 12px;
+  text-align: center;
+  transition: 0.3s;
+}
 
-    .header-left h1 em {
-      font-style: normal;
-      color: var(--gray-3);
-    }
+.stat:hover {
+  background: #151515;
+}
 
-    .header-right {
-      text-align: right;
-      padding-bottom: 0.35rem;
-    }
+.games {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 15px;
+}
 
-    #live-clock {
-      font-family: var(--font-m);
-      font-size: 13px;
-      font-weight: 400;
-      color: var(--gray-4);
-      letter-spacing: 0.05em;
-    }
+.card {
+  background: #0f0f0f;
+  border: 1px solid #1f1f1f;
+  padding: 18px;
+  border-radius: 14px;
+  transition: 0.25s;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeIn 0.4s forwards;
+}
 
-    .live-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      font-family: var(--font-m);
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--black);
-      margin-top: 8px;
-    }
+@keyframes fadeIn {
+  to { opacity: 1; transform: translateY(0); }
+}
 
-    .live-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--black);
-      animation: livePulse 1.8s ease-in-out infinite;
-    }
+.card:hover {
+  transform: translateY(-6px);
+  border-color: #333;
+}
 
-    @keyframes livePulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50%       { opacity: 0.4; transform: scale(0.7); }
-    }
+.name {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
 
-    /* ── Stats row ── */
-    #stats {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      border-bottom: 1px solid var(--gray-2);
-      animation: slideDown 0.7s 0.1s var(--ease-o) both;
-    }
+.status {
+  font-size: 13px;
+  margin-bottom: 8px;
+}
 
-    .stat {
-      padding: 2rem 0;
-      border-right: 1px solid var(--gray-2);
-      position: relative;
-      overflow: hidden;
-    }
-    .stat:last-child { border-right: none; }
-    .stat-inner { padding: 0 2rem; }
+.online { color: #4ade80; }
+.offline { color: #f87171; }
 
-    .stat-label {
-      font-family: var(--font-m);
-      font-size: 10px;
-      font-weight: 500;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--gray-3);
-      margin-bottom: 0.6rem;
-    }
+.info {
+  font-size: 12px;
+  color: #aaa;
+}
 
-    .stat-num {
-      font-size: 2.8rem;
-      font-weight: 800;
-      letter-spacing: -0.04em;
-      line-height: 1;
-      color: var(--black);
-      transition: all 0.4s var(--ease-o);
-    }
+a {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 13px;
+  color: white;
+  border: 1px solid #333;
+  padding: 6px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+}
 
-    .stat-num.muted { color: var(--gray-3); }
+a:hover {
+  background: #222;
+}
 
-    .stat-sub {
-      font-family: var(--font-m);
-      font-size: 11px;
-      color: var(--gray-4);
-      margin-top: 0.35rem;
-    }
-
-    /* ── Grid ── */
-    #games {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      margin-top: 2.5rem;
-      border: 1px solid var(--gray-2);
-      border-radius: 0;
-    }
-
-    /* ── Game card ── */
-    .game-card {
-      border-right: 1px solid var(--gray-2);
-      border-bottom: 1px solid var(--gray-2);
-      padding: 2rem;
-      position: relative;
-      overflow: hidden;
-      background: var(--white);
-      transition:
-        background 0.35s var(--ease-o),
-        color 0.35s var(--ease-o),
-        transform 0.4s var(--ease-b);
-      animation: cardReveal 0.6s var(--ease-o) both;
-      cursor: pointer;
-    }
-
-    .game-card:hover {
-      background: var(--black);
-      color: var(--white);
-      z-index: 2;
-      transform: scale(1.015);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.18);
-    }
-
-    /* Card inner reveal line */
-    .game-card::after {
-      content: '';
-      position: absolute;
-      bottom: 0; left: 0;
-      height: 2px;
-      width: 0;
-      background: var(--black);
-      transition: width 0.4s var(--ease-o);
-    }
-
-    /* ── Card header ── */
-    .card-head {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      margin-bottom: 1.5rem;
-    }
-
-    .game-index {
-      font-family: var(--font-m);
-      font-size: 10px;
-      font-weight: 500;
-      letter-spacing: 0.15em;
-      color: var(--gray-3);
-      transition: color 0.35s;
-    }
-
-    .game-card:hover .game-index { color: rgba(255,255,255,0.35); }
-
-    .status-tag {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-family: var(--font-m);
-      font-size: 10px;
-      font-weight: 500;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      padding: 4px 10px;
-      border-radius: 2px;
-      transition: all 0.35s;
-    }
-
-    .status-tag.live {
-      background: var(--black);
-      color: var(--white);
-    }
-    .status-tag.offline {
-      background: var(--gray-1);
-      color: var(--gray-4);
-    }
-
-    .game-card:hover .status-tag.live {
-      background: var(--white);
-      color: var(--black);
-    }
-    .game-card:hover .status-tag.offline {
-      background: rgba(255,255,255,0.1);
-      color: rgba(255,255,255,0.5);
-    }
-
-    .tag-dot {
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .live .tag-dot {
-      background: var(--white);
-      animation: livePulse 2s ease-in-out infinite;
-    }
-    .game-card:hover .live .tag-dot { background: var(--black); }
-    .offline .tag-dot { background: var(--gray-3); }
-
-    /* ── Game name ── */
-    .game-name {
-      font-size: 1.4rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      line-height: 1.15;
-      color: var(--black);
-      margin-bottom: 0.6rem;
-      transition: color 0.35s;
-    }
-    .game-card:hover .game-name { color: var(--white); }
-
-    /* ── Player count ── */
-    .player-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 1.75rem;
-    }
-
-    .player-label {
-      font-family: var(--font-m);
-      font-size: 11px;
-      font-weight: 400;
-      letter-spacing: 0.08em;
-      color: var(--gray-4);
-      transition: color 0.35s;
-    }
-    .game-card:hover .player-label { color: rgba(255,255,255,0.45); }
-
-    .player-count {
-      font-family: var(--font-m);
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--black);
-      transition: color 0.35s;
-    }
-    .game-card:hover .player-count { color: var(--white); }
-
-    /* Player mini-bar */
-    .player-bar-wrap {
-      flex: 1;
-      height: 2px;
-      background: var(--gray-2);
-      border-radius: 2px;
-      overflow: hidden;
-      transition: background 0.35s;
-    }
-    .game-card:hover .player-bar-wrap { background: rgba(255,255,255,0.15); }
-
-    .player-bar {
-      height: 100%;
-      background: var(--black);
-      border-radius: 2px;
-      width: 0;
-      transition: width 0.9s var(--ease-o), background 0.35s;
-    }
-    .game-card:hover .player-bar { background: var(--white); }
-
-    /* ── Play button ── */
-    .play-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-      font-family: var(--font-m);
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--black);
-      border: 1px solid var(--gray-2);
-      padding: 10px 20px 10px 16px;
-      border-radius: 2px;
-      position: relative;
-      overflow: hidden;
-      transition: color 0.35s, border-color 0.35s;
-    }
-
-    .play-link::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: var(--black);
-      transform: translateX(-101%);
-      transition: transform 0.35s var(--ease-o);
-      z-index: 0;
-    }
-
-    .play-link:hover::before { transform: translateX(0); }
-    .play-link:hover { color: var(--white); border-color: var(--black); }
-
-    .game-card:hover .play-link {
-      border-color: rgba(255,255,255,0.3);
-      color: var(--white);
-    }
-    .game-card:hover .play-link::before { background: var(--white); }
-    .game-card:hover .play-link:hover { color: var(--black); }
-
-    .play-link span, .play-link svg { position: relative; z-index: 1; }
-    .play-link svg {
-      width: 12px; height: 12px;
-      transition: transform 0.3s var(--ease-o);
-    }
-    .play-link:hover svg { transform: translateX(4px); }
-
-    /* ── Skeleton ── */
-    .skeleton {
-      padding: 2rem;
-      border-right: 1px solid var(--gray-2);
-      border-bottom: 1px solid var(--gray-2);
-    }
-    .sk-line {
-      height: 12px;
-      background: var(--gray-2);
-      border-radius: 2px;
-      animation: skeletonPulse 1.4s ease-in-out infinite;
-    }
-    .sk-line + .sk-line { margin-top: 10px; }
-    @keyframes skeletonPulse {
-      0%, 100% { opacity: 0.5; }
-      50%       { opacity: 1; }
-    }
-
-    /* ── Error ── */
-    .error-msg {
-      grid-column: 1 / -1;
-      padding: 3rem 2rem;
-      font-family: var(--font-m);
-      font-size: 12px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--gray-3);
-      border-right: 1px solid var(--gray-2);
-    }
-
-    /* ── Footer ── */
-    footer {
-      margin-top: 4rem;
-      padding-top: 1.5rem;
-      border-top: 1px solid var(--gray-2);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      animation: fadeIn 0.6s 0.5s both;
-    }
-
-    .footer-left {
-      font-family: var(--font-m);
-      font-size: 11px;
-      color: var(--gray-3);
-      letter-spacing: 0.1em;
-    }
-
-    #next-refresh {
-      font-family: var(--font-m);
-      font-size: 11px;
-      color: var(--gray-4);
-      letter-spacing: 0.08em;
-    }
-
-    /* ── Animations ── */
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-16px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes cardReveal {
-      from { opacity: 0; transform: translateY(24px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
-
-    /* counter animation */
-    .count-anim {
-      transition: all 0.5s var(--ease-o);
-    }
-
-    @media (max-width: 640px) {
-      #stats { grid-template-columns: repeat(2, 1fr); }
-      header { flex-direction: column; align-items: flex-start; gap: 1rem; }
-      .header-right { text-align: left; }
-    }
-  </style>
+.unlock {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  font-size: 12px;
+  color: #aaa;
+}
+</style>
 </head>
+
 <body>
 
-<div id="refresh-bar"></div>
+<div class="container">
+  <h1>Live Game Monitor</h1>
 
-<div id="app">
-
-  <header>
-    <div class="header-left">
-      <h1>Game<br/><em>Status</em></h1>
-    </div>
-    <div class="header-right">
-      <div id="live-clock">—</div>
-      <div class="live-badge">
-        <span class="live-dot"></span>
-        Auto-refresh · 5s
-      </div>
-    </div>
-  </header>
-
-  <div id="stats">
-    <div class="stat"><div class="stat-inner">
-      <div class="stat-label">Total Games</div>
-      <div class="stat-num" id="s-total">—</div>
-    </div></div>
-    <div class="stat"><div class="stat-inner">
-      <div class="stat-label">Online</div>
-      <div class="stat-num" id="s-online">—</div>
-    </div></div>
-    <div class="stat"><div class="stat-inner">
-      <div class="stat-label">Offline</div>
-      <div class="stat-num muted" id="s-offline">—</div>
-    </div></div>
-    <div class="stat"><div class="stat-inner">
-      <div class="stat-label">Total Players</div>
-      <div class="stat-num" id="s-players">—</div>
-      <div class="stat-sub" id="s-players-sub"></div>
-    </div></div>
+  <div class="stats">
+    <div class="stat"><b id="total">0</b><br>Total</div>
+    <div class="stat"><b id="online">0</b><br>Online</div>
+    <div class="stat"><b id="players">0</b><br>Players</div>
   </div>
 
-  <div id="games">
-    <div class="skeleton"><div class="sk-line" style="width:40%"></div><div class="sk-line" style="width:65%;margin-top:20px"></div><div class="sk-line" style="width:30%;margin-top:8px"></div></div>
-    <div class="skeleton"><div class="sk-line" style="width:55%"></div><div class="sk-line" style="width:70%;margin-top:20px"></div><div class="sk-line" style="width:25%;margin-top:8px"></div></div>
-    <div class="skeleton"><div class="sk-line" style="width:35%"></div><div class="sk-line" style="width:60%;margin-top:20px"></div><div class="sk-line" style="width:40%;margin-top:8px"></div></div>
-  </div>
-
-  <footer>
-    <div class="footer-left">Firebase Realtime DB · tryloser-com</div>
-    <div id="next-refresh">Next refresh in <span id="countdown">5</span>s</div>
-  </footer>
-
+  <div class="games" id="games"></div>
 </div>
 
+<div class="unlock">Click anywhere to enable sound 🔊</div>
+
+<audio id="alertSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+
 <script>
-const DB_URL = "https://tryloser-com-default-rtdb.firebaseio.com/games.json";
-const INTERVAL = 5000;
+const URL = "https://tryloser-com-default-rtdb.firebaseio.com/games.json";
 
-// Clock
-function updateClock() {
-  document.getElementById('live-clock').textContent =
-    new Date().toLocaleTimeString('en-US', {hour12: false, hour:'2-digit', minute:'2-digit', second:'2-digit'});
-}
-updateClock();
-setInterval(updateClock, 1000);
+let knownGames = new Set();
+let soundEnabled = false;
 
-// Countdown + refresh bar
-let countdownVal = 5;
-let lastFetch = Date.now();
-const bar = document.getElementById('refresh-bar');
-const cdEl = document.getElementById('countdown');
+document.addEventListener("click", () => {
+  soundEnabled = true;
+});
 
-setInterval(() => {
-  const elapsed = Date.now() - lastFetch;
-  const pct = Math.min((elapsed / INTERVAL) * 100, 100);
-  bar.style.width = pct + '%';
-  countdownVal = Math.max(0, Math.ceil((INTERVAL - elapsed) / 1000));
-  cdEl.textContent = countdownVal;
-}, 100);
-
-// Animate number counting up
-function animateCount(el, target) {
-  const start = parseInt(el.dataset.val || '0');
-  const end = typeof target === 'number' ? target : 0;
-  el.dataset.val = end;
-  if (start === end) return;
-  const dur = 600;
-  const startTime = performance.now();
-  function step(now) {
-    const p = Math.min((now - startTime) / dur, 1);
-    const ease = 1 - Math.pow(1 - p, 3);
-    el.textContent = Math.round(start + (end - start) * ease);
-    if (p < 1) requestAnimationFrame(step);
-    else el.textContent = end;
-  }
-  requestAnimationFrame(step);
+function timeAgo(ts) {
+  const s = Math.floor(Date.now()/1000 - ts);
+  if (s < 60) return s+"s ago";
+  if (s < 3600) return Math.floor(s/60)+"m ago";
+  return Math.floor(s/3600)+"h ago";
 }
 
-// Max players reference for bar width
-let maxPlayers = 1;
+async function load() {
+  const res = await fetch(URL);
+  const data = await res.json();
 
-function buildCard(id, game, index) {
-  const name    = game.name   || 'Unknown';
-  const status  = game.status || 'offline';
-  const link    = game.link   || '#';
-  const players = typeof game.players === 'number' ? game.players : (parseInt(game.players) || 0);
-  const running = status === 'running';
-  const barPct  = maxPlayers > 0 ? Math.round((players / maxPlayers) * 100) : 0;
-  const padded  = String(index + 1).padStart(2, '0');
+  const container = document.getElementById("games");
+  container.innerHTML = "";
 
-  const card = document.createElement('div');
-  card.className = 'game-card';
-  card.dataset.id = id;
-  card.style.animationDelay = (index * 0.06) + 's';
+  if (!data) return;
 
-  card.innerHTML = `
-    <div class="card-head">
-      <span class="game-index">${padded}</span>
-      <span class="status-tag ${running ? 'live' : 'offline'}">
-        <span class="tag-dot"></span>
-        ${running ? 'Live' : 'Offline'}
-      </span>
-    </div>
-    <div class="game-name">${name}</div>
-    <div class="player-row">
-      <span class="player-label">Players</span>
-      <span class="player-count">${players.toLocaleString()}</span>
-      <div class="player-bar-wrap">
-        <div class="player-bar" data-fill="${barPct}"></div>
+  let total = 0, online = 0, players = 0;
+
+  Object.entries(data).forEach(([id, g]) => {
+    if (!g) return;
+
+    total++;
+
+    const isOnline = (Date.now()/1000 - g.lastUpdate) < 60;
+    if (isOnline) online++;
+
+    players += g.players || 0;
+
+    // 🔊 NEW GAME DETECTION
+    if (!knownGames.has(id)) {
+      knownGames.add(id);
+      if (soundEnabled) {
+        document.getElementById("alertSound").play();
+      }
+    }
+
+    const div = document.createElement("div");
+    div.className = "card";
+
+    div.innerHTML = `
+      <div class="name">${g.name}</div>
+      <div class="status ${isOnline ? 'online' : 'offline'}">
+        ${isOnline ? "● Running" : "● Offline"}
       </div>
-    </div>
-    <a href="${link}" target="_blank" rel="noopener" class="play-link">
-      <span>Play Game</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M5 12h14M12 5l7 7-7 7"/>
-      </svg>
-    </a>
-  `;
-  return card;
+
+      <div class="info">Players: ${g.players || 0}</div>
+      <div class="info">Updated: ${timeAgo(g.lastUpdate || 0)}</div>
+
+      <a href="${g.link}" target="_blank">Play</a>
+    `;
+
+    container.appendChild(div);
+  });
+
+  document.getElementById("total").textContent = total;
+  document.getElementById("online").textContent = online;
+  document.getElementById("players").textContent = players;
 }
 
-let prevData = {};
-
-async function loadGames() {
-  lastFetch = Date.now();
-  bar.style.transition = 'none';
-  bar.style.width = '0%';
-  setTimeout(() => { bar.style.transition = 'width 0.25s linear'; }, 50);
-
-  try {
-    const res  = await fetch(DB_URL);
-    const data = await res.json();
-    const container = document.getElementById('games');
-
-    if (!data) {
-      container.innerHTML = '<div class="error-msg">No data available.</div>';
-      return;
-    }
-
-    const entries = Object.entries(data).filter(([, g]) => g);
-    const total   = entries.length;
-    const online  = entries.filter(([, g]) => g.status === 'running').length;
-    const offline = total - online;
-    const totalPlayers = entries.reduce((sum, [, g]) => {
-      return sum + (typeof g.players === 'number' ? g.players : parseInt(g.players) || 0);
-    }, 0);
-    maxPlayers = Math.max(...entries.map(([, g]) => parseInt(g.players) || 0), 1);
-
-    // Stats
-    animateCount(document.getElementById('s-total'),   total);
-    animateCount(document.getElementById('s-online'),  online);
-    animateCount(document.getElementById('s-offline'), offline);
-    animateCount(document.getElementById('s-players'), totalPlayers);
-    document.getElementById('s-players-sub').textContent =
-      online > 0 ? `across ${online} live game${online !== 1 ? 's' : ''}` : 'no live games';
-
-    // Cards — diff update: only re-render changed cards
-    const currentIds = new Set(entries.map(([id]) => id));
-    const existingCards = {};
-    container.querySelectorAll('.game-card').forEach(c => existingCards[c.dataset.id] = c);
-
-    // Remove stale
-    Object.keys(existingCards).forEach(id => {
-      if (!currentIds.has(id)) existingCards[id].remove();
-    });
-
-    // Rebuild cleanly if structure changed
-    const needsRebuild = entries.length !== Object.keys(existingCards).length;
-    if (needsRebuild) {
-      container.innerHTML = '';
-      entries.forEach(([id, game], i) => {
-        const card = buildCard(id, game, i);
-        container.appendChild(card);
-      });
-    } else {
-      // Update existing cards in-place
-      entries.forEach(([id, game], i) => {
-        const existing = existingCards[id];
-        if (existing) {
-          const status  = game.status || 'offline';
-          const players = typeof game.players === 'number' ? game.players : (parseInt(game.players) || 0);
-          const running = status === 'running';
-          const barPct  = maxPlayers > 0 ? Math.round((players / maxPlayers) * 100) : 0;
-
-          const tag = existing.querySelector('.status-tag');
-          tag.className = `status-tag ${running ? 'live' : 'offline'}`;
-          tag.innerHTML = `<span class="tag-dot"></span>${running ? 'Live' : 'Offline'}`;
-
-          const pc = existing.querySelector('.player-count');
-          if (pc) pc.textContent = players.toLocaleString();
-
-          const pb = existing.querySelector('.player-bar');
-          if (pb) {
-            pb.style.width = '0';
-            requestAnimationFrame(() => { pb.style.width = barPct + '%'; });
-          }
-        } else {
-          const card = buildCard(id, game, i);
-          container.appendChild(card);
-        }
-      });
-    }
-
-    // Animate bars after paint
-    requestAnimationFrame(() => {
-      container.querySelectorAll('.player-bar[data-fill]').forEach(bar => {
-        const fill = bar.dataset.fill;
-        requestAnimationFrame(() => { bar.style.width = fill + '%'; });
-      });
-    });
-
-    prevData = data;
-
-  } catch (err) {
-    document.getElementById('games').innerHTML = '<div class="error-msg">Error loading data — retrying in 5s</div>';
-    console.error(err);
-  }
-}
-
-loadGames();
-setInterval(loadGames, INTERVAL);
+load();
+setInterval(load, 5000);
 </script>
+
 </body>
 </html>
