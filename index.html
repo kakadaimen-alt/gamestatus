@@ -38,16 +38,12 @@ html,body{min-height:100vh;background:var(--bg);color:var(--text);
   font-family:'Outfit',sans-serif;overflow-x:hidden;
   transition: background 0.4s var(--eo), color 0.4s var(--eo);}
 
-/* bg canvas */
+/* bg canvas & noise */
 #bgc{position:fixed;inset:0;z-index:0;pointer-events:none;}
-
-/* grid */
 body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   background-image:linear-gradient(rgba(var(--rgb-main),.035) 1px,transparent 1px),
     linear-gradient(90deg,rgba(var(--rgb-main),.035) 1px,transparent 1px);
   background-size:60px 60px; transition: opacity 0.4s;}
-
-/* noise */
 body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   opacity:.025;}
@@ -131,7 +127,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
   overflow:hidden;transition:background .35s var(--eo),transform .4s var(--eb),box-shadow .4s;
   animation:cR .6s var(--eo) both;}
 
-/* Card Background Image */
+/* Card Background Image (Real Thumbnail) */
 .card-bg {
   position:absolute; inset:0; z-index:0;
   background-size:cover; background-position:center;
@@ -171,11 +167,34 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
 .live .pdot{background:var(--text);animation:lp 2s ease-in-out infinite;}
 .off .pdot{background:rgba(var(--rgb-main),.18);}
 
+/* Title & Rewind Icon */
+.gname-wrapper {
+  display: flex; align-items: center; gap: 8px; margin: 1rem 0 0;
+}
 .gname{font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:700;
   letter-spacing:-.01em;color:var(--l100);
-  margin:1rem 0 0;line-height:1.2;transition:color .3s,text-shadow .3s;}
-.gid {font-family:'JetBrains Mono',monospace;font-size:9px; color:var(--l400); margin-top:4px; margin-bottom:1.2rem; letter-spacing:0.05em;}
+  line-height:1.2;transition:color .3s,text-shadow .3s;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .game-card:hover .gname{color:var(--l50);text-shadow:0 0 22px rgba(var(--rgb-main),.5);}
+
+.rewind-icon {
+  color: var(--l400); cursor: help; position: relative; transition: color 0.3s; display:flex; align-items:center;
+}
+.rewind-icon:hover { color: var(--text); }
+.rewind-icon::after {
+  content: attr(data-tooltip);
+  position: absolute; bottom: 150%; left: 50%; transform: translateX(-50%);
+  background: var(--card2); border: 1px solid var(--bdr);
+  padding: 6px 10px; border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  color: var(--text); white-space: nowrap;
+  opacity: 0; visibility: hidden; transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(var(--rgb-main), 0.1);
+  z-index: 10; pointer-events: none;
+}
+.rewind-icon:hover::after { opacity: 1; visibility: visible; bottom: 120%; }
+
+.gid {font-family:'JetBrains Mono',monospace;font-size:9px; color:var(--l400); margin-top:4px; margin-bottom:1.2rem; letter-spacing:0.05em;}
 .game-card:hover .gid{color:var(--l300);}
 
 /* players */
@@ -426,6 +445,12 @@ function buildCard(id,game,idx,isTop,isOnline){
   const barPct=maxP>0?Math.round((players/maxP)*100):0;
   const pad=String(idx+1).padStart(2,'0');
   
+  // Past Names Setup
+  const pastNames = game.pastNames || [];
+  const hasPastNames = pastNames.length > 0;
+  const pastNamesStr = hasPastNames ? pastNames.join(', ').replace(/"/g, '&quot;') : '';
+  const rewindHTML = hasPastNames ? `<div class="rewind-icon" data-tooltip="Past names: ${pastNamesStr}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></div>` : '';
+
   const imgURL = `https://www.roblox.com/asset-thumbnail/image?assetId=${id}&width=768&height=432&format=png`;
 
   const card=document.createElement('div');
@@ -445,7 +470,10 @@ function buildCard(id,game,idx,isTop,isOnline){
             </span>
           </div>
         </div>
-        <div class="gname">${name}</div>
+        <div class="gname-wrapper">
+           <div class="gname" title="${name}">${name}</div>
+           ${rewindHTML}
+        </div>
         <div class="gid">ID: ${id}</div>
         <div class="psec">
           <div class="phdr">
@@ -480,21 +508,21 @@ function render() {
       }
       return;
   } else {
-      if(gContainer.querySelector('.errmsg')) {
-          gContainer.innerHTML = ''; // clear loading message safely
-      }
+      if(gContainer.querySelector('.errmsg')) { gContainer.innerHTML = ''; }
   }
 
-  const entries=Object.entries(currentData).filter(([,v])=>v);
+  // Filter out any banned games completely from processing so they don't render
+  const entries=Object.entries(currentData).filter(([,v]) => {
+      return v && !v.isBanned && !String(v.name).includes("Content Deleted");
+  });
+  
   let online=0, totalP=0;
   maxP=1;
 
-  // Evaluate data
   const processed = entries.map(([id, game]) => {
     const isOnline = (game.players > 0) && (Date.now()/1000 - game.lastUpdate < 15);
     if(isOnline) {
-      online++;
-      totalP += game.players;
+      online++; totalP += game.players;
       if(game.players > maxP) maxP = game.players;
     } else {
       game.players = 0; 
@@ -530,34 +558,49 @@ function render() {
     let card = gContainer.querySelector(`.game-card[data-id="${data.id}"]`);
 
     if (!card) {
-      // Create new card only if it doesn't exist yet
       card = buildCard(data.id, data.game, i, isTop, data.isOnline);
       gContainer.appendChild(card);
-      // set bar animation smoothly after append
-      requestAnimationFrame(()=>requestAnimationFrame(()=>{
-         card.querySelector('.pbfill').style.width = barPct + '%';
-      }));
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{ card.querySelector('.pbfill').style.width = barPct + '%'; }));
     } else {
-      // IN-PLACE UPDATE: Gently update existing card to prevent visual bouncing
-      
+      // IN-PLACE UPDATE
       const pnum = card.querySelector('.pnum');
       const newPlayers = data.game.players.toLocaleString();
       if (pnum.textContent !== newPlayers) pnum.textContent = newPlayers;
 
       const pbfill = card.querySelector('.pbfill');
       if (pbfill.dataset.fill !== String(barPct)) {
-        pbfill.dataset.fill = barPct;
-        pbfill.style.width = barPct + '%';
+        pbfill.dataset.fill = barPct; pbfill.style.width = barPct + '%';
       }
 
       const idxSpan = card.querySelector('.cidx > span:first-child');
       if (idxSpan && idxSpan.textContent !== pad) idxSpan.textContent = pad;
 
-      if (data.isOnline) {
-         card.classList.remove('is-off');
-      } else {
-         card.classList.add('is-off');
+      // Update Name and Rewind
+      const gnameWrapper = card.querySelector('.gname-wrapper');
+      const gnameEl = gnameWrapper.querySelector('.gname');
+      if (gnameEl.textContent !== data.game.name) {
+          gnameEl.textContent = data.game.name;
+          gnameEl.title = data.game.name;
       }
+
+      const pastNames = data.game.pastNames || [];
+      const hasPastNames = pastNames.length > 0;
+      let rewindEl = gnameWrapper.querySelector('.rewind-icon');
+      
+      if (hasPastNames) {
+          const pastNamesStr = pastNames.join(', ').replace(/"/g, '&quot;');
+          if (!rewindEl) {
+              const rHtml = `<div class="rewind-icon" data-tooltip="Past names: ${pastNamesStr}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></div>`;
+              gnameWrapper.insertAdjacentHTML('beforeend', rHtml);
+          } else {
+              rewindEl.setAttribute('data-tooltip', `Past names: ${pastNamesStr}`);
+          }
+      } else if (rewindEl) {
+          rewindEl.remove();
+      }
+
+      if (data.isOnline) { card.classList.remove('is-off'); } 
+      else { card.classList.add('is-off'); }
 
       const statusSpill = card.querySelector('.spill:not(.top)');
       if (statusSpill) {
@@ -588,21 +631,15 @@ function render() {
     prevSt[data.id] = currState;
   });
 
-  // Remove any games that were deleted from the database
+  // Remove banned or deleted games from UI immediately
   Array.from(gContainer.children).forEach(child => {
-     if (!seenIds.has(child.dataset.id)) {
-        child.remove();
-     }
+     if (!seenIds.has(child.dataset.id)) { child.remove(); }
   });
 
   if(firstLoad){ SFX.load(); firstLoad=false; }
 }
 
-onValue(gamesRef, snap => {
-  currentData = snap.val() || {};
-  render();
-});
-
+onValue(gamesRef, snap => { currentData = snap.val() || {}; render(); });
 setInterval(render, 1000);
 
 </script>
