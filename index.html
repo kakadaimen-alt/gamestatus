@@ -52,12 +52,6 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   opacity:.025;}
 
-/* refresh bar */
-#rbar{position:fixed;top:0;left:0;height:2px;width:0%;z-index:200;
-  background:linear-gradient(90deg,var(--l700),var(--l400),var(--l200));
-  box-shadow:0 0 14px var(--l400),0 0 28px rgba(var(--rgb-main),0.3);
-  transition:width .25s linear;}
-
 /* app */
 #app{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:0 2rem 6rem;}
 
@@ -124,7 +118,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
 .stitle{font-family:'JetBrains Mono',monospace;font-size:10px;
   letter-spacing:.25em;text-transform:uppercase;color:var(--muted);}
 #lupd{font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:.1em;color:rgba(var(--rgb-main),.35);}
+  letter-spacing:.1em;color:var(--text); text-shadow: 0 0 10px var(--text);}
 
 /* grid */
 #games{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));
@@ -137,15 +131,15 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
   overflow:hidden;transition:background .35s var(--eo),transform .4s var(--eb),box-shadow .4s;
   animation:cR .6s var(--eo) both;}
 
-/* Card Background Image */
+/* Card Background Image (Real Thumbnail) */
 .card-bg {
   position:absolute; inset:0; z-index:0;
   background-size:cover; background-position:center;
-  opacity:0.08; filter:grayscale(100%) blur(2px);
+  opacity:0.1; filter:grayscale(100%) blur(4px);
   transition:all 0.5s var(--eo);
 }
 .game-card:hover .card-bg {
-  opacity:0.25; filter:grayscale(100%) blur(0px);
+  opacity:0.3; filter:grayscale(100%) blur(0px);
   transform:scale(1.05);
 }
 
@@ -226,13 +220,6 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
 .game-card.is-off .pnum{color:rgba(var(--rgb-main),.22);}
 .game-card.is-off .playbtn{opacity:.45;}
 
-/* skeleton */
-.skel{background:var(--card);padding:2rem;}
-.sk{background:rgba(var(--rgb-main),.07);border-radius:6px;
-  animation:skp 1.6s ease-in-out infinite;}
-.sk+.sk{margin-top:12px;}
-@keyframes skp{0%,100%{opacity:.35;}50%{opacity:.8;}}
-
 .errmsg{grid-column:1/-1;padding:3rem;text-align:center;
   font-family:'JetBrains Mono',monospace;font-size:11px;
   letter-spacing:.15em;text-transform:uppercase;color:rgba(var(--rgb-main),.2);}
@@ -244,15 +231,6 @@ footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--bdr);
 .fl{font-family:'JetBrains Mono',monospace;font-size:10px;
   letter-spacing:.1em;color:rgba(var(--rgb-main),.25);}
 .fr{display:flex;align-items:center;gap:14px;}
-#rsvg{width:38px;height:38px;}
-#rt{fill:none;stroke:rgba(var(--rgb-main),.1);stroke-width:2;}
-#rp{fill:none;stroke:var(--l400);stroke-width:2;stroke-linecap:round;
-  stroke-dasharray:94.25;stroke-dashoffset:94.25;
-  transform:rotate(-90deg);transform-origin:50% 50%;
-  filter:drop-shadow(0 0 5px rgba(var(--rgb-main),.4));
-  transition:stroke-dashoffset .2s linear;}
-#cdtxt{font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:.1em;color:rgba(var(--rgb-main),.35);}
 
 /* anims */
 @keyframes sD{from{opacity:0;transform:translateY(-16px);}to{opacity:1;transform:translateY(0);}}
@@ -270,7 +248,6 @@ footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--bdr);
 <body>
 
 <canvas id="bgc"></canvas>
-<div id="rbar"></div>
 
 <div id="app">
 
@@ -282,7 +259,7 @@ footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--bdr);
     <div class="hr">
       <div id="clk">00:00:00</div>
       <div class="hbadges">
-        <div class="lbadge"><span class="ldot"></span>LIVE · 5S</div>
+        <div class="lbadge"><span class="ldot"></span>REALTIME CONNECTION</div>
         <button id="sndbtn" onclick="toggleSnd()">SFX ON</button>
         <button id="thmbtn" onclick="toggleTheme()">THEME</button>
       </div>
@@ -307,34 +284,31 @@ footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--bdr);
 
   <div class="shead">
     <div class="stitle">Active Servers</div>
-    <div id="lupd">—</div>
+    <div id="lupd">Waiting for data...</div>
   </div>
 
-  <div id="games">
-    <div class="skel"><div class="sk" style="width:38%;height:9px"></div><div class="sk" style="width:62%;height:20px;margin-top:18px"></div><div class="sk" style="width:100%;height:3px;margin-top:15px"></div><div class="sk" style="width:100%;height:38px;margin-top:15px"></div></div>
-    <div class="skel"><div class="sk" style="width:45%;height:9px"></div><div class="sk" style="width:55%;height:20px;margin-top:18px"></div><div class="sk" style="width:100%;height:3px;margin-top:15px"></div><div class="sk" style="width:100%;height:38px;margin-top:15px"></div></div>
-    <div class="skel"><div class="sk" style="width:32%;height:9px"></div><div class="sk" style="width:70%;height:20px;margin-top:18px"></div><div class="sk" style="width:100%;height:3px;margin-top:15px"></div><div class="sk" style="width:100%;height:38px;margin-top:15px"></div></div>
-  </div>
+  <div id="games"></div>
 
   <footer>
-    <div class="fl">Firebase RTDB · tryloser-com · auto-refresh 5s</div>
-    <div class="fr">
-      <span id="cdtxt">NEXT IN 5S</span>
-      <svg id="rsvg" viewBox="0 0 38 38">
-        <circle id="rt" cx="19" cy="19" r="15"/>
-        <circle id="rp" cx="19" cy="19" r="15"/>
-      </svg>
-    </div>
+    <div class="fl">Firebase RTDB · tryloser-com · WebSockets Active</div>
   </footer>
 
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const app = initializeApp({ databaseURL: "https://tryloser-com-default-rtdb.firebaseio.com/" });
+const db = getDatabase(app);
+const gamesRef = ref(db, "games");
+
 /* ─── THEME TOGGLE ─── */
 function toggleTheme(){
   document.body.classList.toggle('light');
   if(!muted) SFX.click();
 }
+window.toggleTheme = toggleTheme;
 
 /* ─── PARTICLES ─── */
 (()=>{
@@ -355,7 +329,6 @@ function toggleTheme(){
 
   function draw(){
     x.clearRect(0,0,W,H);
-    
     const isLight = document.body.classList.contains('light');
     const rgb = isLight ? '0,0,0' : '255,255,255';
 
@@ -420,6 +393,7 @@ function toggleSnd(){
   document.getElementById('sndbtn').textContent=muted?'SFX OFF':'SFX ON';
   if(!muted)SFX.click();
 }
+window.toggleSnd = toggleSnd;
 
 /* ─── CLOCK ─── */
 const clkEl=document.getElementById('clk');
@@ -429,20 +403,6 @@ function tick(){
     .map(v=>String(v).padStart(2,'0')).join(':');
 }
 tick();setInterval(tick,1000);
-
-/* ─── REFRESH RING ─── */
-const INTV=5000,CIRC=2*Math.PI*15;
-const rbar=document.getElementById('rbar');
-const rp=document.getElementById('rp');
-const cdtxt=document.getElementById('cdtxt');
-let lastFetch=Date.now();
-setInterval(()=>{
-  const el=Date.now()-lastFetch;
-  const pct=Math.min(el/INTV,1);
-  rbar.style.width=(pct*100)+'%';
-  rp.style.strokeDashoffset=CIRC*(1-pct);
-  cdtxt.textContent='NEXT IN '+Math.max(0,Math.ceil((INTV-el)/1000))+'S';
-},120);
 
 /* ─── COUNT-UP ─── */
 function countUp(el,target){
@@ -459,20 +419,19 @@ function countUp(el,target){
 
 /* ─── BUILD CARD ─── */
 let maxP=1;
-function buildCard(id,game,idx,isTop){
+function buildCard(id,game,idx,isTop,isOnline){
   const name=game.name||'Unknown';
-  const running=(game.status||'offline')==='running';
   const link=game.link||'#';
   const players=Math.max(0,parseInt(game.players)||0);
   const barPct=maxP>0?Math.round((players/maxP)*100):0;
   const pad=String(idx+1).padStart(2,'0');
   
-  // Directly fetch thumbnail asset from Roblox using the Place ID
-  const imgURL = `https://www.roblox.com/asset-thumbnail/image?assetId=${id}&width=420&height=420&format=png`;
+  // Real Place Thumbnail Integration
+  const imgURL = `https://www.roblox.com/asset-thumbnail/image?assetId=${id}&width=768&height=432&format=png`;
 
   const card=document.createElement('div');
-  card.className='game-card'+(running?'':' is-off')+(isTop?' top-game':'');
-  card.dataset.id=id;card.dataset.status=game.status||'offline';
+  card.className='game-card'+(isOnline?'':' is-off')+(isTop?' top-game':'');
+  card.dataset.id=id;
   card.style.animationDelay=(idx*.075)+'s';
 
   card.innerHTML=`
@@ -482,8 +441,8 @@ function buildCard(id,game,idx,isTop){
           <span>${pad}</span>
           <div style="display:flex; gap:8px;">
             ${isTop?'<span class="spill top">TOP GAME</span>':''}
-            <span class="spill ${running?'live':'off'}">
-              <span class="pdot"></span>${running?'LIVE':'OFFLINE'}
+            <span class="spill ${isOnline?'live':'off'}">
+              <span class="pdot"></span>${isOnline?'LIVE':'OFFLINE'}
             </span>
           </div>
         </div>
@@ -500,10 +459,7 @@ function buildCard(id,game,idx,isTop){
         </div>
         <a href="${link}" target="_blank" rel="noopener" class="playbtn">
           <span>JOIN</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-               stroke-linecap="round" stroke-linejoin="round">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
     </div>`;
 
@@ -512,74 +468,83 @@ function buildCard(id,game,idx,isTop){
   return card;
 }
 
-/* ─── FETCH ─── */
-const DB='https://tryloser-com-default-rtdb.firebaseio.com/games.json';
-let firstLoad=true,prevSt={};
+/* ─── REALTIME RENDER ENGINE ─── */
+let currentData = {};
+let firstLoad = true, prevSt = {};
 
-async function load(){
-  lastFetch=Date.now();
-  rbar.style.transition='none';rbar.style.width='0%';
-  requestAnimationFrame(()=>{rbar.style.transition='width .25s linear';});
-
-  try{
-    const data=await(await fetch(DB)).json();
-    const g=document.getElementById('games');
-
-    if(!data){g.innerHTML='<div class="errmsg">No data found.</div>';return;}
-
-    const entries=Object.entries(data).filter(([,v])=>v);
-    const total=entries.length;
-    const online=entries.filter(([,v])=>v.status==='running').length;
-    const offline=total-online;
-    const totalP=entries.reduce((s,[,v])=>s+Math.max(0,parseInt(v.players)||0),0);
-    maxP=Math.max(...entries.map(([,v])=>Math.max(0,parseInt(v.players)||0)),1);
-
-    // peak game
-    const peak=entries.reduce((b,[id,v])=>{
-      return (Math.max(0,parseInt(v.players)||0))>(Math.max(0,parseInt(b[1].players)||0))?[id,v]:b;
-    },entries[0]||['—',{players:0,name:'—'}]);
-    const peakP=Math.max(0,parseInt(peak[1].players)||0);
-    const peakN=peak[1].name||'—';
-
-    countUp(document.getElementById('sv-total'),total);
-    countUp(document.getElementById('sv-online'),online);
-    countUp(document.getElementById('sv-offline'),offline);
-    countUp(document.getElementById('sv-players'),totalP);
-    document.getElementById('sv-psub').textContent=
-      online>0?`across ${online} live server${online!==1?'s':''}`:'all servers offline';
-      
-    document.getElementById('sv-peak').textContent=peakN;
-    document.getElementById('sv-peakn').textContent=peakP.toLocaleString() + ' players';
-
-    document.getElementById('lupd').textContent=
-      'Updated '+new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
-
-    entries.forEach(([id,v])=>{
-      const prev=prevSt[id];const curr=v.status||'offline';
-      if(prev&&prev!==curr)curr==='running'?SFX.online():SFX.offline();
-      prevSt[id]=curr;
-    });
-
-    g.innerHTML='';
-    entries.forEach(([id,game],i)=>{
-      g.appendChild(buildCard(id,game,i,id===peak[0]&&peakP>0));
-    });
-
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{
-      g.querySelectorAll('.pbfill').forEach(b=>b.style.width=b.dataset.fill+'%');
-    }));
-
-    if(firstLoad){SFX.load();firstLoad=false;}
-
-  }catch(e){
-    document.getElementById('games').innerHTML=
-      '<div class="errmsg">⚠ Connection error — retrying in 5s</div>';
-    console.error(e);
+function render() {
+  const gContainer = document.getElementById('games');
+  if(!currentData || Object.keys(currentData).length === 0){
+      gContainer.innerHTML='<div class="errmsg">Waiting for game data...</div>';
+      return;
   }
+
+  const entries=Object.entries(currentData).filter(([,v])=>v);
+  let online=0, totalP=0;
+  maxP=1;
+
+  // Process data and check offline strictly based on 10s rule or 0 players
+  const processed = entries.map(([id, game]) => {
+    // A game is ONLINE if it has players AND hasn't crashed (lastUpdate within 15 seconds)
+    const isOnline = (game.players > 0) && (Date.now()/1000 - game.lastUpdate < 15);
+    
+    if(isOnline) {
+      online++;
+      totalP += game.players;
+      if(game.players > maxP) maxP = game.players;
+    } else {
+      game.players = 0; // Force 0 if offline
+    }
+    return {id, game, isOnline};
+  });
+
+  const total = processed.length;
+  const offline = total - online;
+
+  // Find Peak
+  const peak = processed.reduce((b, curr) => {
+    return curr.game.players > b.game.players ? curr : b;
+  }, processed[0] || {id: '—', game: {players: 0, name: '—'}});
+
+  countUp(document.getElementById('sv-total'), total);
+  countUp(document.getElementById('sv-online'), online);
+  countUp(document.getElementById('sv-offline'), offline);
+  countUp(document.getElementById('sv-players'), totalP);
+  document.getElementById('sv-psub').textContent = online>0?`across ${online} live server${online!==1?'s':''}`:'all servers offline';
+      
+  document.getElementById('sv-peak').textContent = peak.game.name || '—';
+  document.getElementById('sv-peakn').textContent = (peak.game.players || 0).toLocaleString() + ' players';
+  document.getElementById('lupd').textContent = '• DATA SYNCED INSTANTLY';
+
+  gContainer.innerHTML='';
+  processed.forEach((data, i)=>{
+    // Play SFX if status changed
+    const currState = data.isOnline ? 'running' : 'offline';
+    if(prevSt[data.id] && prevSt[data.id] !== currState) {
+        currState === 'running' ? SFX.online() : SFX.offline();
+    }
+    prevSt[data.id] = currState;
+
+    gContainer.appendChild(buildCard(data.id, data.game, i, data.id === peak.id && peak.game.players > 0, data.isOnline));
+  });
+
+  // Animate bars
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    gContainer.querySelectorAll('.pbfill').forEach(b=>b.style.width=b.dataset.fill+'%');
+  }));
+
+  if(firstLoad){ SFX.load(); firstLoad=false; }
 }
 
-load();
-setInterval(load,INTV);
+// Websocket Listener: Updates the instant Firebase data changes
+onValue(gamesRef, snap => {
+  currentData = snap.val() || {};
+  render();
+});
+
+// Failsafe Background Loop: Re-evaluates the 10-second crash timeout every second
+setInterval(render, 1000);
+
 </script>
 </body>
 </html>
