@@ -137,15 +137,25 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
   overflow:hidden;transition:background .35s var(--eo),transform .4s var(--eb),box-shadow .4s;
   animation:cR .6s var(--eo) both;}
 
-/* shimmer sweep */
-.game-card::after{content:'';position:absolute;top:0;left:-80%;width:50%;height:100%;
-  background:linear-gradient(90deg,transparent,rgba(var(--rgb-main),.05),transparent);
-  transition:left .75s var(--eo);pointer-events:none;}
+/* Card Background Image */
+.card-bg {
+  position:absolute; inset:0; z-index:0;
+  background-size:cover; background-position:center;
+  opacity:0.08; filter:grayscale(100%) blur(2px);
+  transition:all 0.5s var(--eo);
+}
+.game-card:hover .card-bg {
+  opacity:0.25; filter:grayscale(100%) blur(0px);
+  transform:scale(1.05);
+}
+
+.card-content {
+  position:relative; z-index:1;
+}
 
 .game-card:hover{background:var(--card2);
   transform:scale(1.013) translateY(-3px);
   box-shadow:0 0 0 1px rgba(var(--rgb-main),.18),0 14px 44px rgba(var(--rgb-main),.08);z-index:3;}
-.game-card:hover::after{left:130%;}
 
 .game-card.top-game{background:rgba(var(--rgb-main),.03);}
 
@@ -169,8 +179,10 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
 
 .gname{font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:700;
   letter-spacing:-.01em;color:var(--l100);
-  margin:1rem 0 .35rem;line-height:1.2;transition:color .3s,text-shadow .3s;}
+  margin:1rem 0 0;line-height:1.2;transition:color .3s,text-shadow .3s;}
+.gid {font-family:'JetBrains Mono',monospace;font-size:9px; color:var(--l400); margin-top:4px; margin-bottom:1.2rem; letter-spacing:0.05em;}
 .game-card:hover .gname{color:var(--l50);text-shadow:0 0 22px rgba(var(--rgb-main),.5);}
+.game-card:hover .gid{color:var(--l300);}
 
 /* players */
 .psec{margin:1.2rem 0 1.5rem;}
@@ -210,7 +222,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
 .playbtn svg{width:14px;height:14px;transition:transform .3s var(--eo);}
 .playbtn:hover svg{transform:translateX(5px);}
 
-.game-card.is-off .gname{color:rgba(var(--rgb-main),.35);}
+.game-card.is-off .gname, .game-card.is-off .gid {color:rgba(var(--rgb-main),.35);}
 .game-card.is-off .pnum{color:rgba(var(--rgb-main),.22);}
 .game-card.is-off .playbtn{opacity:.45;}
 
@@ -454,6 +466,9 @@ function buildCard(id,game,idx,isTop){
   const players=Math.max(0,parseInt(game.players)||0);
   const barPct=maxP>0?Math.round((players/maxP)*100):0;
   const pad=String(idx+1).padStart(2,'0');
+  
+  // Directly fetch thumbnail asset from Roblox using the Place ID
+  const imgURL = `https://www.roblox.com/asset-thumbnail/image?assetId=${id}&width=420&height=420&format=png`;
 
   const card=document.createElement('div');
   card.className='game-card'+(running?'':' is-off')+(isTop?' top-game':'');
@@ -461,32 +476,36 @@ function buildCard(id,game,idx,isTop){
   card.style.animationDelay=(idx*.075)+'s';
 
   card.innerHTML=`
-    <div class="cidx">
-      <span>${pad}</span>
-      <div style="display:flex; gap:8px;">
-        ${isTop?'<span class="spill top">TOP GAME</span>':''}
-        <span class="spill ${running?'live':'off'}">
-          <span class="pdot"></span>${running?'LIVE':'OFFLINE'}
-        </span>
-      </div>
-    </div>
-    <div class="gname">${name}</div>
-    <div class="psec">
-      <div class="phdr">
-        <span class="plbl">Players</span>
-        <span class="pnum">${players.toLocaleString()}</span>
-      </div>
-      <div class="pbtrack">
-        <div class="pbfill" data-fill="${barPct}"></div>
-      </div>
-    </div>
-    <a href="${link}" target="_blank" rel="noopener" class="playbtn">
-      <span>JOIN</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-           stroke-linecap="round" stroke-linejoin="round">
-        <path d="M5 12h14M12 5l7 7-7 7"/>
-      </svg>
-    </a>`;
+    <div class="card-bg" style="background-image: url('${imgURL}');"></div>
+    <div class="card-content">
+        <div class="cidx">
+          <span>${pad}</span>
+          <div style="display:flex; gap:8px;">
+            ${isTop?'<span class="spill top">TOP GAME</span>':''}
+            <span class="spill ${running?'live':'off'}">
+              <span class="pdot"></span>${running?'LIVE':'OFFLINE'}
+            </span>
+          </div>
+        </div>
+        <div class="gname">${name}</div>
+        <div class="gid">ID: ${id}</div>
+        <div class="psec">
+          <div class="phdr">
+            <span class="plbl">Players</span>
+            <span class="pnum">${players.toLocaleString()}</span>
+          </div>
+          <div class="pbtrack">
+            <div class="pbfill" data-fill="${barPct}"></div>
+          </div>
+        </div>
+        <a href="${link}" target="_blank" rel="noopener" class="playbtn">
+          <span>JOIN</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </a>
+    </div>`;
 
   card.addEventListener('mouseenter',()=>SFX.hover());
   card.querySelector('.playbtn').addEventListener('mouseenter',()=>SFX.click());
@@ -529,7 +548,6 @@ async function load(){
     document.getElementById('sv-psub').textContent=
       online>0?`across ${online} live server${online!==1?'s':''}`:'all servers offline';
       
-    // Fixed Peak Game Sizing - Name is big, players are small
     document.getElementById('sv-peak').textContent=peakN;
     document.getElementById('sv-peakn').textContent=peakP.toLocaleString() + ' players';
 
