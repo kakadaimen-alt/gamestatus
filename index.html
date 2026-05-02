@@ -131,7 +131,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
   overflow:hidden;transition:background .35s var(--eo),transform .4s var(--eb),box-shadow .4s;
   animation:cR .6s var(--eo) both;}
 
-/* Card Background Image (Real Thumbnail) */
+/* Card Background Image */
 .card-bg {
   position:absolute; inset:0; z-index:0;
   background-size:cover; background-position:center;
@@ -417,7 +417,7 @@ function countUp(el,target){
   })(t0);
 }
 
-/* ─── BUILD CARD ─── */
+/* ─── INITIAL CARD BUILDER ─── */
 let maxP=1;
 function buildCard(id,game,idx,isTop,isOnline){
   const name=game.name||'Unknown';
@@ -426,7 +426,6 @@ function buildCard(id,game,idx,isTop,isOnline){
   const barPct=maxP>0?Math.round((players/maxP)*100):0;
   const pad=String(idx+1).padStart(2,'0');
   
-  // Real Place Thumbnail Integration
   const imgURL = `https://www.roblox.com/asset-thumbnail/image?assetId=${id}&width=768&height=432&format=png`;
 
   const card=document.createElement('div');
@@ -468,32 +467,37 @@ function buildCard(id,game,idx,isTop,isOnline){
   return card;
 }
 
-/* ─── REALTIME RENDER ENGINE ─── */
+/* ─── REALTIME IN-PLACE DOM UPDATER ─── */
 let currentData = {};
 let firstLoad = true, prevSt = {};
 
 function render() {
   const gContainer = document.getElementById('games');
+  
   if(!currentData || Object.keys(currentData).length === 0){
-      gContainer.innerHTML='<div class="errmsg">Waiting for game data...</div>';
+      if(!gContainer.querySelector('.errmsg')) {
+         gContainer.innerHTML='<div class="errmsg">Waiting for game data...</div>';
+      }
       return;
+  } else {
+      if(gContainer.querySelector('.errmsg')) {
+          gContainer.innerHTML = ''; // clear loading message safely
+      }
   }
 
   const entries=Object.entries(currentData).filter(([,v])=>v);
   let online=0, totalP=0;
   maxP=1;
 
-  // Process data and check offline strictly based on 10s rule or 0 players
+  // Evaluate data
   const processed = entries.map(([id, game]) => {
-    // A game is ONLINE if it has players AND hasn't crashed (lastUpdate within 15 seconds)
     const isOnline = (game.players > 0) && (Date.now()/1000 - game.lastUpdate < 15);
-    
     if(isOnline) {
       online++;
       totalP += game.players;
       if(game.players > maxP) maxP = game.players;
     } else {
-      game.players = 0; // Force 0 if offline
+      game.players = 0; 
     }
     return {id, game, isOnline};
   });
@@ -501,7 +505,6 @@ function render() {
   const total = processed.length;
   const offline = total - online;
 
-  // Find Peak
   const peak = processed.reduce((b, curr) => {
     return curr.game.players > b.game.players ? curr : b;
   }, processed[0] || {id: '—', game: {players: 0, name: '—'}});
@@ -516,33 +519,90 @@ function render() {
   document.getElementById('sv-peakn').textContent = (peak.game.players || 0).toLocaleString() + ' players';
   document.getElementById('lupd').textContent = '• DATA SYNCED INSTANTLY';
 
-  gContainer.innerHTML='';
+  const seenIds = new Set();
+
   processed.forEach((data, i)=>{
-    // Play SFX if status changed
+    seenIds.add(data.id);
+    const isTop = (data.id === peak.id && peak.game.players > 0);
+    const barPct = maxP > 0 ? Math.round((data.game.players / maxP) * 100) : 0;
+    const pad = String(i + 1).padStart(2, '0');
+
+    let card = gContainer.querySelector(`.game-card[data-id="${data.id}"]`);
+
+    if (!card) {
+      // Create new card only if it doesn't exist yet
+      card = buildCard(data.id, data.game, i, isTop, data.isOnline);
+      gContainer.appendChild(card);
+      // set bar animation smoothly after append
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+         card.querySelector('.pbfill').style.width = barPct + '%';
+      }));
+    } else {
+      // IN-PLACE UPDATE: Gently update existing card to prevent visual bouncing
+      
+      const pnum = card.querySelector('.pnum');
+      const newPlayers = data.game.players.toLocaleString();
+      if (pnum.textContent !== newPlayers) pnum.textContent = newPlayers;
+
+      const pbfill = card.querySelector('.pbfill');
+      if (pbfill.dataset.fill !== String(barPct)) {
+        pbfill.dataset.fill = barPct;
+        pbfill.style.width = barPct + '%';
+      }
+
+      const idxSpan = card.querySelector('.cidx > span:first-child');
+      if (idxSpan && idxSpan.textContent !== pad) idxSpan.textContent = pad;
+
+      if (data.isOnline) {
+         card.classList.remove('is-off');
+      } else {
+         card.classList.add('is-off');
+      }
+
+      const statusSpill = card.querySelector('.spill:not(.top)');
+      if (statusSpill) {
+         const newClass = `spill ${data.isOnline ? 'live' : 'off'}`;
+         if (statusSpill.className !== newClass) {
+             statusSpill.className = newClass;
+             statusSpill.innerHTML = `<span class="pdot"></span>${data.isOnline ? 'LIVE' : 'OFFLINE'}`;
+         }
+      }
+
+      if (isTop) {
+         card.classList.add('top-game');
+         if (!card.querySelector('.spill.top')) {
+             const badgeContainer = card.querySelector('.cidx > div');
+             badgeContainer.insertAdjacentHTML('afterbegin', '<span class="spill top">TOP GAME</span>');
+         }
+      } else {
+         card.classList.remove('top-game');
+         const topBadge = card.querySelector('.spill.top');
+         if (topBadge) topBadge.remove();
+      }
+    }
+
     const currState = data.isOnline ? 'running' : 'offline';
     if(prevSt[data.id] && prevSt[data.id] !== currState) {
         currState === 'running' ? SFX.online() : SFX.offline();
     }
     prevSt[data.id] = currState;
-
-    gContainer.appendChild(buildCard(data.id, data.game, i, data.id === peak.id && peak.game.players > 0, data.isOnline));
   });
 
-  // Animate bars
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    gContainer.querySelectorAll('.pbfill').forEach(b=>b.style.width=b.dataset.fill+'%');
-  }));
+  // Remove any games that were deleted from the database
+  Array.from(gContainer.children).forEach(child => {
+     if (!seenIds.has(child.dataset.id)) {
+        child.remove();
+     }
+  });
 
   if(firstLoad){ SFX.load(); firstLoad=false; }
 }
 
-// Websocket Listener: Updates the instant Firebase data changes
 onValue(gamesRef, snap => {
   currentData = snap.val() || {};
   render();
 });
 
-// Failsafe Background Loop: Re-evaluates the 10-second crash timeout every second
 setInterval(render, 1000);
 
 </script>
