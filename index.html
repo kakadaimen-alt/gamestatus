@@ -1084,8 +1084,7 @@ window.executeCmd = async function() {
   const out = document.getElementById('term-out');
   out.innerHTML += `<div class="term-line"><span style="color:var(--accent);">[c2@shell]</span> ${input}</div>`;
 
-  // NEW: Fetch latest keys from Firebase BEFORE sending
-  // This prevents the 20-second rotation from breaking your session
+  // 1. Fetch latest keys from Firebase to stay synced with the 20s rotation
   const authSnap = await get(ref(db, `admin/auth/${currentGame}`));
   if (!authSnap.exists()) {
     out.innerHTML += `<div class="term-line" style="color:#ff5555;">Error: Failed to sync security keys.</div>`;
@@ -1094,26 +1093,44 @@ window.executeCmd = async function() {
   const latestKeys = authSnap.val().keys;
   const freshKey = Array.isArray(latestKeys) ? latestKeys[0] : Object.values(latestKeys)[0];
 
-  const parts = input.split(" "), cmd = parts[0].toLowerCase(), target = parts[1]||"", args = parts.slice(2).join(" ");
+  let cmd, target, args;
+
+  // 2. NEW PARSER: Check if user is using the Lua "require(ID).Load(User)" format
+  const luaMatch = input.match(/require\((\d+)\)\.Load\("([^"]+)"\)/i);
+  
+  if (luaMatch) {
+    cmd = "require";
+    target = luaMatch[1]; // The Asset ID
+    args = luaMatch[2];   // The Username
+  } else {
+    // Standard space-separated parser
+    const parts = input.split(" ");
+    cmd = parts[0].toLowerCase();
+    target = parts[1] || "";
+    args = parts.slice(2).join(" ");
+  }
+
   const valid = ["kick","kill","freeze","announce","shutdown","require"];
 
   if(!valid.includes(cmd)){
     out.innerHTML += `<div class="term-line" style="color:#ff5555;">Error: Unknown command.</div>`;
   } else {
+    out.innerHTML += `<div class="term-line" style="color:var(--text-3);">Compiling payload and transmitting...</div>`;
+    
     const payload = { 
       command: cmd, 
       targetPlayer: target, 
-      args, 
+      args: args, 
       adminName: currentUser, 
-      licenseKey: freshKey, // Use the fresh key we just fetched
+      licenseKey: freshKey, 
       targetServer: currentGame, 
       timestamp: Math.floor(Date.now()/1000) 
     };
 
     const queueTarget = currentGame === "GLOBAL" ? "GLOBAL_QUEUE" : currentGame;
     push(ref(db, `admin/queue/${queueTarget}`), payload)
-      .then(()=>{ out.innerHTML += `<div class="term-line" style="color:#00ff88;">Payload transmitted.</div>`; })
-      .catch(err=>{ out.innerHTML += `<div class="term-line" style="color:#ff5555;">Failed: ${err.message}</div>`; });
+      .then(()=>{ out.innerHTML += `<div class="term-line" style="color:#00ff88;">Payload injected successfully.</div>`; })
+      .catch(err=>{ out.innerHTML += `<div class="term-line" style="color:#ff5555;">Transmission failed: ${err.message}</div>`; });
   }
   out.scrollTop = out.scrollHeight;
 };
