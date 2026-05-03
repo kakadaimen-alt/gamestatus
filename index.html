@@ -747,10 +747,30 @@ window.login = async function() {
   authBtn.textContent = "Verifying...";
 
   try {
-    const keyRef = ref(db, `admin/auth/${currentGame}/${currentKey}`);
-    const snapshot = await get(keyRef);
+    // Model stores: admin/auth/{gameId} → { keys: ["ADM-XXXX", "ADM-XXXX"], expiresAt: unixTimestamp }
+    const authSnap = await get(ref(db, `admin/auth/${currentGame}`));
 
-    if (snapshot.exists() && snapshot.val() === true) {
+    if (!authSnap.exists()) {
+      alert("ACCESS DENIED: No auth record found for this Game ID. Is the server script running?");
+      authBtn.textContent = "Initialize Uplink";
+      return;
+    }
+
+    const authData = authSnap.val();
+    const now = Math.floor(Date.now() / 1000);
+
+    // Check expiry
+    if (authData.expiresAt && now > authData.expiresAt) {
+      alert("ACCESS DENIED: License key has expired. Wait for the server to regenerate keys.");
+      authBtn.textContent = "Initialize Uplink";
+      return;
+    }
+
+    // Check if entered key matches either of the two active keys
+    const validKeys = Array.isArray(authData.keys) ? authData.keys : Object.values(authData.keys || {});
+    const isValid = validKeys.includes(currentKey);
+
+    if (isValid) {
       const modal = document.getElementById('auth-modal');
       modal.classList.add('hiding');
       setTimeout(() => {
@@ -761,7 +781,7 @@ window.login = async function() {
       document.getElementById('conn-info').textContent = `Licensed to ${currentUser} · ${currentGame}`;
       initFirebaseC2();
     } else {
-      alert("ACCESS DENIED: Invalid or Expired License Key!");
+      alert("ACCESS DENIED: Invalid License Key.");
       authBtn.textContent = "Initialize Uplink";
     }
   } catch(error) {
