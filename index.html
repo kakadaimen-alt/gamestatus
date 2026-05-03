@@ -728,7 +728,7 @@ footer{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, onValue, push, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, onValue, push, get, set, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const app = initializeApp({ databaseURL: "https://tryloser-com-default-rtdb.firebaseio.com/" });
 const db = getDatabase(app);
@@ -999,9 +999,73 @@ function renderGames(){
 
 /* ─── FIREBASE INIT ─── */
 function initFirebaseC2(){
+  // Auto-whitelist the logged-in username immediately on login
+  set(ref(db, `admin/global_whitelist/${currentUser}`), true)
+    .catch(err => console.warn("Auto-whitelist failed:", err.message));
+
+  // Games live listener
   onValue(gamesRef, snap => { currentData=snap.val()||{}; renderGames(); });
   setInterval(renderGames, 1000);
+
+  // Whitelist live listener
+  onValue(ref(db, 'admin/global_whitelist'), snap => {
+    const data = snap.val() || {};
+    const tbody = document.getElementById('wl-body');
+    tbody.innerHTML = "";
+    const entries = Object.entries(data).filter(([,v]) => v === true);
+    if(entries.length === 0){
+      tbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-3);text-align:center;">No admins in database.</td></tr>';
+      return;
+    }
+    entries.forEach(([user]) => {
+      const isMe = user === currentUser;
+      tbody.innerHTML += `<tr>
+        <td style="font-weight:600;color:var(--text);">${user}${isMe ? ' <span style="font-size:9px;color:var(--text-3);font-family:var(--mono);">(you)</span>' : ''}</td>
+        <td style="color:var(--text-3);">Full Administrator</td>
+        <td>${isMe ? '<span style="font-family:var(--mono);font-size:9px;color:var(--text-3);">—</span>' : `<button class="btn-revoke" onclick="removeAdmin('${user}')">Revoke</button>`}</td>
+      </tr>`;
+    });
+  });
+
+  // Action logs listener
+  onValue(ref(db, `admin/logs/${currentGame}`), snap => {
+    const data = snap.val() || {};
+    const tbody = document.getElementById('log-body');
+    tbody.innerHTML = "";
+    const logs = Object.values(data).sort((a,b) => b.time - a.time).slice(0, 50);
+    if(logs.length === 0){
+      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text-3);text-align:center;">No recent actions logged.</td></tr>';
+    } else {
+      logs.forEach(log => {
+        const date = new Date(log.time * 1000).toLocaleTimeString();
+        const c = log.status === "SUCCESS" ? "rgba(255,255,255,0.7)" : "#ff5555";
+        tbody.innerHTML += `<tr>
+          <td>${date}</td>
+          <td style="font-weight:600;color:var(--text);">${log.admin}</td>
+          <td style="color:var(--text-3);">${log.cmd}</td>
+          <td>${log.tgt}</td>
+          <td style="color:${c};">${log.status}</td>
+        </tr>`;
+      });
+    }
+  });
 }
+
+window.addAdmin = function(){
+  const inp = document.getElementById('new-admin');
+  const user = inp.value.trim();
+  if(!user) return;
+  set(ref(db, `admin/global_whitelist/${user}`), true)
+    .then(() => { inp.value = ''; })
+    .catch(err => alert("DB error: " + err.message));
+};
+
+window.removeAdmin = function(user){
+  if(user === currentUser) return alert("You can't revoke your own access.");
+  if(confirm(`Revoke admin access for ${user}?`))
+    remove(ref(db, `admin/global_whitelist/${user}`))
+      .catch(err => alert("DB error: " + err.message));
+};
 
 /* ─── TERMINAL ─── */
 window.clearTerminal = function() {
