@@ -3,406 +3,727 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>AdminPlus C2 | Status</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<title>AdminPlus · C2</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 
 :root{
-  --bg:#050505;
-  --card:rgba(15,15,15,0.78);
-  --card2:rgba(25,25,25,0.88);
-  --l50:#ffffff;--l100:#eeeeee;--l200:#cccccc;
-  --l300:#aaaaaa;--l400:#888888;--l500:#555555;
-  --l600:#333333;--l700:#151515;
-  --text:#eeeeee;--muted:rgba(255,255,255,0.45);
-  --bdr:rgba(255,255,255,0.15);--bdrh:rgba(255,255,255,0.38);
-  --rgb-main:255,255,255;
-  --eo:cubic-bezier(0.16,1,0.3,1);
-  --eb:cubic-bezier(0.34,1.56,0.64,1);
+  --bg:#080808;
+  --surface:#0f0f0f;
+  --surface2:#161616;
+  --surface3:#1f1f1f;
+  --border:rgba(255,255,255,0.06);
+  --border-hi:rgba(255,255,255,0.14);
+  --text:#f0f0f0;
+  --text-2:#888;
+  --text-3:#444;
+  --accent:#fff;
+  --mono:'DM Mono',monospace;
+  --sans:'DM Sans',sans-serif;
+  --display:'Syne',sans-serif;
+  --ease-out:cubic-bezier(0.16,1,0.3,1);
+  --ease-bounce:cubic-bezier(0.34,1.56,0.64,1);
+  --ease-in-out:cubic-bezier(0.65,0,0.35,1);
+  --blur:blur(24px);
 }
 
-body.light {
-  --bg:#fafafa;
-  --card:rgba(245,245,245,0.78);
-  --card2:rgba(230,230,230,0.88);
-  --l50:#000000;--l100:#111111;--l200:#333333;
-  --l300:#555555;--l400:#777777;--l500:#aaaaaa;
-  --l600:#cccccc;--l700:#eeeeee;
-  --text:#111111;--muted:rgba(0,0,0,0.5);
-  --bdr:rgba(0,0,0,0.15);--bdrh:rgba(0,0,0,0.4);
-  --rgb-main:0,0,0;
+html,body{
+  min-height:100vh;background:var(--bg);color:var(--text);
+  font-family:var(--sans);overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
 }
 
-html,body{min-height:100vh;background:var(--bg);color:var(--text);
-  font-family:'Outfit',sans-serif;overflow-x:hidden;
-  transition: background 0.4s var(--eo), color 0.4s var(--eo);}
+/* GRAIN OVERLAY */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity:.018;mix-blend-mode:overlay;
+}
 
-/* bg canvas & noise */
-#bgc{position:fixed;inset:0;z-index:0;pointer-events:none;}
-body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
-  background-image:linear-gradient(rgba(var(--rgb-main),.035) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(var(--rgb-main),.035) 1px,transparent 1px);
-  background-size:60px 60px; transition: opacity 0.4s;}
-body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity:.025;}
+/* AMBIENT GLOW */
+.ambient{
+  position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+}
+.ambient-orb{
+  position:absolute;border-radius:50%;filter:blur(120px);
+  animation:drift 18s ease-in-out infinite;
+}
+.ambient-orb:nth-child(1){
+  width:600px;height:600px;top:-200px;left:-100px;
+  background:radial-gradient(circle,rgba(255,255,255,0.022) 0%,transparent 70%);
+  animation-delay:0s;
+}
+.ambient-orb:nth-child(2){
+  width:500px;height:500px;bottom:-150px;right:-100px;
+  background:radial-gradient(circle,rgba(255,255,255,0.018) 0%,transparent 70%);
+  animation-delay:-7s;
+}
+@keyframes drift{
+  0%,100%{transform:translate(0,0) scale(1);}
+  33%{transform:translate(40px,-30px) scale(1.05);}
+  66%{transform:translate(-25px,45px) scale(0.97);}
+}
 
-/* ─── C2 AUTH MODAL ─── */
-#auth-modal { position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px); transition:opacity 0.5s ease; }
-.auth-box { background:var(--card); border:1px solid var(--bdr); padding:3rem; border-radius:16px; width:420px; text-align:center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-.auth-box input { width:100%; background:rgba(var(--rgb-main),0.03); border:1px solid var(--bdr); color:var(--text); padding:14px; margin:10px 0; border-radius:8px; font-family:'JetBrains Mono'; outline:none; transition:border 0.2s;}
-.auth-box input:focus { border-color:var(--l400); }
-.auth-btn { width:100%; background:var(--text); color:var(--bg); padding:14px; border:none; border-radius:8px; font-weight:800; font-family:'Orbitron'; cursor:pointer; margin-top:15px; transition: 0.2s; letter-spacing: 2px;}
-.auth-btn:hover { transform: translateY(-2px); box-shadow: 0 0 15px rgba(var(--rgb-main),0.3); }
+/* AUTH MODAL */
+#auth-modal{
+  position:fixed;inset:0;z-index:100;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(8,8,8,0.92);
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  transition:opacity .6s var(--ease-in-out);
+}
+#auth-modal.hiding{opacity:0;pointer-events:none;}
 
-/* app */
-#app{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:0 2rem 6rem; display:none; animation:fi 1s ease both;}
+.auth-box{
+  width:400px;
+  background:var(--surface);
+  border:1px solid var(--border-hi);
+  border-radius:20px;
+  padding:3rem 2.5rem;
+  position:relative;
+  animation:modal-in .7s var(--ease-out) both;
+}
+@keyframes modal-in{
+  from{opacity:0;transform:translateY(24px) scale(0.97);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+.auth-logo{
+  font-family:var(--display);font-size:1.8rem;font-weight:800;
+  letter-spacing:-.03em;color:var(--text);margin-bottom:6px;
+}
+.auth-sub{
+  font-family:var(--mono);font-size:10px;color:var(--text-3);
+  letter-spacing:.2em;text-transform:uppercase;margin-bottom:2.5rem;
+}
+.field-group{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+.field{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:14px 16px;
+  color:var(--text);
+  font-family:var(--mono);font-size:13px;
+  outline:none;width:100%;
+  transition:border-color .25s var(--ease-out),background .25s;
+}
+.field:focus{border-color:var(--border-hi);background:var(--surface3);}
+.field::placeholder{color:var(--text-3);}
+.auth-btn{
+  width:100%;background:var(--text);color:var(--bg);
+  border:none;border-radius:10px;padding:15px;
+  font-family:var(--display);font-size:13px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+  transition:transform .3s var(--ease-bounce),box-shadow .3s,opacity .2s;
+}
+.auth-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(255,255,255,0.12);}
+.auth-btn:active{transform:translateY(0);}
 
-/* header */
-header{padding:3rem 0 2.5rem;display:flex;align-items:flex-end;
-  justify-content:space-between;gap:2rem;border-bottom:1px solid var(--bdr);
-  animation:sD .8s var(--eo) both;}
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:4px;}
 
-h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
-  font-weight:900;letter-spacing:-.02em;line-height:1;
-  background:linear-gradient(140deg,var(--text) 0%,var(--l300) 40%,var(--l500) 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.htag{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.2em;
-  text-transform:uppercase;color:var(--muted);margin-top:8px;}
+/* APP SHELL */
+#app{
+  display:none;position:relative;z-index:2;
+  max-width:1200px;margin:0 auto;padding:0 2rem 6rem;
+  animation:fade-up .8s var(--ease-out) both;
+}
+@keyframes fade-up{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
 
-.hr{text-align:right;padding-bottom:4px;}
-#clk{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:500;
-  color:var(--l200);letter-spacing:.06em;
-  text-shadow:0 0 24px rgba(var(--rgb-main),0.45);}
-.hbadges{display:flex;align-items:center;gap:10px;justify-content:flex-end;margin-top:8px;}
-.lbadge{display:inline-flex;align-items:center;gap:6px;
-  font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;
-  letter-spacing:.18em;text-transform:uppercase;color:var(--l300);
-  border:1px solid rgba(var(--rgb-main),.2);border-radius:999px;
-  padding:5px 14px;background:rgba(var(--rgb-main),.07);}
-.ldot{width:6px;height:6px;border-radius:50%;background:var(--text);
-  box-shadow:0 0 8px var(--text);animation:lp 2s ease-in-out infinite;}
-@keyframes lp{0%,100%{opacity:1;box-shadow:0 0 7px var(--text);}
-  50%{opacity:.5;box-shadow:0 0 16px var(--text),0 0 30px rgba(var(--rgb-main),.3);}}
+/* HEADER */
+header{
+  padding:3.5rem 0 2.5rem;
+  display:flex;align-items:flex-end;justify-content:space-between;
+  gap:2rem;border-bottom:1px solid var(--border);
+}
+.wordmark{
+  font-family:var(--display);font-size:clamp(2.2rem,5vw,4rem);
+  font-weight:800;letter-spacing:-.04em;line-height:1;color:var(--text);
+}
+.wordmark span{color:var(--text-3);}
+.conn-tag{
+  font-family:var(--mono);font-size:10px;
+  color:var(--text-3);letter-spacing:.12em;
+  text-transform:uppercase;margin-top:10px;
+}
+.header-right{text-align:right;}
+.clock{
+  font-family:var(--mono);font-size:2rem;font-weight:500;
+  color:var(--text);letter-spacing:.04em;line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.header-badges{
+  display:flex;align-items:center;gap:8px;
+  justify-content:flex-end;margin-top:10px;
+}
+.badge{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:9px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--text-3);
+  border:1px solid var(--border);border-radius:999px;
+  padding:5px 13px;
+  transition:border-color .2s,color .2s;
+}
+.badge:hover{border-color:var(--border-hi);color:var(--text-2);}
+.pulse-dot{
+  width:5px;height:5px;border-radius:50%;background:var(--text);
+  animation:pulse-glow 2.5s ease-in-out infinite;
+}
+@keyframes pulse-glow{
+  0%,100%{opacity:.8;box-shadow:0 0 4px rgba(255,255,255,0.3);}
+  50%{opacity:.3;box-shadow:0 0 10px rgba(255,255,255,0.1);}
+}
+.icon-btn{
+  background:transparent;border:1px solid var(--border);
+  color:var(--text-3);padding:5px 13px;border-radius:999px;
+  font-family:var(--mono);font-size:9px;letter-spacing:.16em;
+  text-transform:uppercase;cursor:pointer;
+  transition:all .2s var(--ease-out);
+}
+.icon-btn:hover{border-color:var(--border-hi);color:var(--text-2);}
 
-#sndbtn, #thmbtn {font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.15em;
-  text-transform:uppercase;color:var(--muted);border:1px solid var(--bdr);
-  background:transparent;padding:5px 12px;border-radius:999px;cursor:pointer;
-  transition:all .2s;}
-#sndbtn:hover, #thmbtn:hover {color:var(--l300);border-color:var(--bdrh);background:rgba(var(--rgb-main),.07);}
+/* TABS */
+.tabs{
+  display:flex;gap:2px;margin:2.5rem 0 2rem;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:4px;
+  overflow-x:auto;
+}
+.tabs::-webkit-scrollbar{display:none;}
+.tab-btn{
+  flex-shrink:0;
+  background:transparent;color:var(--text-3);border:none;
+  padding:10px 20px;border-radius:9px;cursor:pointer;
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  letter-spacing:.12em;text-transform:uppercase;
+  transition:all .3s var(--ease-out);white-space:nowrap;
+  position:relative;
+}
+.tab-btn::after{
+  content:'';position:absolute;inset:0;border-radius:9px;
+  background:rgba(255,255,255,0);
+  transition:background .3s var(--ease-out);
+}
+.tab-btn:hover{color:var(--text-2);}
+.tab-btn:hover::after{background:rgba(255,255,255,0.03);}
+.tab-btn.active{
+  background:var(--surface3);color:var(--text);
+  box-shadow:0 1px 3px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.tab-content{display:none;}
+.tab-content.active{display:block;animation:tab-in .4s var(--ease-out) both;}
+@keyframes tab-in{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 
-/* ─── C2 TABS NAVIGATION ─── */
-.tabs { display:flex; gap:10px; margin-top:2rem; margin-bottom: 2rem; flex-wrap:wrap; animation:sD .8s .1s var(--eo) both;}
-.tab-btn { background:var(--card); color:var(--muted); border:1px solid var(--bdr); padding:12px 24px; border-radius:8px; cursor:pointer; font-family:'JetBrains Mono'; font-size:12px; font-weight:600; text-transform:uppercase; transition: 0.3s var(--eo);}
-.tab-btn:hover { background:rgba(var(--rgb-main),0.05); color:var(--text); transform:translateY(-2px); }
-.tab-btn.active { background:rgba(var(--rgb-main),0.1); color:var(--text); border-color:var(--l400); box-shadow: 0 5px 15px rgba(var(--rgb-main),0.05); }
-.tab-content { display:none; animation: fi 0.4s ease; }
-.tab-content.active { display:block; }
+/* STATS STRIP */
+.stats-strip{
+  display:grid;grid-template-columns:repeat(5,1fr);
+  border:1px solid var(--border);border-radius:16px;overflow:hidden;
+  margin-bottom:2rem;
+}
+.stat{
+  padding:1.8rem 1.6rem;border-right:1px solid var(--border);
+  position:relative;overflow:hidden;
+  transition:background .3s var(--ease-out);
+}
+.stat:last-child{border-right:none;}
+.stat:hover{background:rgba(255,255,255,0.025);}
+.stat-label{
+  font-family:var(--mono);font-size:9px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--text-3);margin-bottom:.75rem;
+}
+.stat-value{
+  font-family:var(--display);font-size:2rem;font-weight:700;
+  letter-spacing:-.04em;color:var(--text);line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.stat-value.dim{color:var(--text-3);}
+.stat-sub{
+  font-family:var(--mono);font-size:9px;color:var(--text-3);
+  margin-top:6px;letter-spacing:.04em;
+}
 
-/* stats */
-#stats{display:grid;grid-template-columns:repeat(5,1fr);
-  border:1px solid var(--bdr);border-radius:16px;overflow:hidden;
-  margin-bottom:2.5rem;background:var(--card);backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);}
-
-.st{padding:1.8rem 1.4rem;border-right:1px solid var(--bdr);position:relative;
-  overflow:hidden;transition:background .3s;}
-.st:last-child{border-right:none;}
-.st:hover{background:rgba(var(--rgb-main),.06);}
-.st::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,var(--l500),transparent);
-  transform:scaleX(0);transition:transform .4s var(--eo);}
-.st:hover::after{transform:scaleX(1);}
-.stl{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;
-  letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:.7rem;}
-.stv{font-family:'Orbitron',monospace;font-size:2rem;font-weight:700;
-  letter-spacing:-.03em;color:var(--l200);line-height:1;
-  text-shadow:0 0 30px rgba(var(--rgb-main),.28);}
-.stv.g{color:var(--text);text-shadow:0 0 22px rgba(var(--rgb-main),.35);}
-.stv.d{color:var(--muted);}
-.stsub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);
-  margin-top:6px;letter-spacing:.04em;}
-
-/* section head */
-.shead{display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:1.5rem;}
-.stitle{font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:.25em;text-transform:uppercase;color:var(--muted);}
-#lupd{font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:.1em;color:var(--text); text-shadow: 0 0 10px var(--text);}
-
-/* grid */
-#games{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));
-  gap:1px;background:var(--bdr);border:1px solid var(--bdr);
-  border-radius:16px;overflow:hidden;}
-
-/* card */
-.game-card{background:var(--card);backdrop-filter:blur(22px);
-  -webkit-backdrop-filter:blur(22px);padding:2rem;position:relative;
-  overflow:hidden;transition:background .35s var(--eo),transform .4s var(--eb),box-shadow .4s;
-  animation:cR .6s var(--eo) both;}
-
-.card-bg { position:absolute; inset:0; z-index:0; background-size:cover; background-position:center; opacity:0.1; filter:grayscale(100%) blur(4px); transition:all 0.5s var(--eo); }
-.game-card:hover .card-bg { opacity:0.3; filter:grayscale(100%) blur(0px); transform:scale(1.05); }
-.card-content { position:relative; z-index:1; }
-.game-card:hover{background:var(--card2); transform:scale(1.013) translateY(-3px); box-shadow:0 0 0 1px rgba(var(--rgb-main),.18),0 14px 44px rgba(var(--rgb-main),.08);z-index:3;}
-.game-card.top-game{background:rgba(var(--rgb-main),.03);}
-
-.cidx{font-family:'JetBrains Mono',monospace;font-size:10px; letter-spacing:.14em;color:rgba(var(--rgb-main),.3); margin-bottom:1.1rem;display:flex;align-items:center;justify-content:space-between;}
-.spill{display:inline-flex;align-items:center;gap:6px; font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500; letter-spacing:.18em;text-transform:uppercase; padding:4px 12px;border-radius:999px;transition:all .3s;}
-.spill.live{background:rgba(var(--rgb-main),.1);color:var(--text); border:1px solid rgba(var(--rgb-main),.25);}
-.spill.off{background:rgba(var(--rgb-main),.05);color:rgba(var(--rgb-main),.35); border:1px solid rgba(var(--rgb-main),.09);}
-.spill.top{background:transparent;color:var(--text); border:1px solid rgba(var(--rgb-main),.4);}
-.pdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
-.live .pdot{background:var(--text);animation:lp 2s ease-in-out infinite;}
-.off .pdot{background:rgba(var(--rgb-main),.18);}
-
-.gname-wrapper { display: flex; align-items: center; gap: 8px; margin: 1rem 0 0; }
-.gname{font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:700; letter-spacing:-.01em;color:var(--l100); line-height:1.2;transition:color .3s,text-shadow .3s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-.game-card:hover .gname{color:var(--l50);text-shadow:0 0 22px rgba(var(--rgb-main),.5);}
-
-.rewind-icon { color: var(--l400); cursor: help; position: relative; transition: color 0.3s; display:flex; align-items:center; }
-.rewind-icon:hover { color: var(--text); }
-.rewind-icon::after { content: attr(data-tooltip); position: absolute; bottom: 150%; left: 50%; transform: translateX(-50%); background: var(--card2); border: 1px solid var(--bdr); padding: 6px 10px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text); white-space: nowrap; opacity: 0; visibility: hidden; transition: all 0.2s; box-shadow: 0 4px 12px rgba(var(--rgb-main), 0.1); z-index: 10; pointer-events: none; }
-.rewind-icon:hover::after { opacity: 1; visibility: visible; bottom: 120%; }
-
-.gid {font-family:'JetBrains Mono',monospace;font-size:9px; color:var(--l400); margin-top:4px; margin-bottom:1.2rem; letter-spacing:0.05em;}
-.game-card:hover .gid{color:var(--l300);}
-
-/* players */
-.psec{margin:1.2rem 0 1.5rem;}
-.phdr{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:.6rem;}
-.plbl{font-family:'JetBrains Mono',monospace;font-size:9px; letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
-.pnum{font-family:'Orbitron',monospace;font-size:1.55rem;font-weight:700; color:var(--l300);letter-spacing:-.03em; text-shadow:0 0 20px rgba(var(--rgb-main),.3);transition:all .3s;}
-.game-card:hover .pnum{color:var(--l200);text-shadow:0 0 30px rgba(var(--rgb-main),.55);}
-.srv-badge { font-size:8px; background:rgba(var(--rgb-main),0.1); padding:2px 6px; border-radius:4px; margin-left:6px; vertical-align:middle; border:1px solid var(--bdr); }
-
-.pbtrack{height:3px;background:rgba(var(--rgb-main),.09);border-radius:3px;overflow:hidden;}
-.pbfill{height:100%;border-radius:3px;width:0%; background:linear-gradient(90deg,var(--l700),var(--l400),var(--l200)); transition:width 1.1s var(--eo);position:relative;overflow:hidden;}
-.pbfill::after{content:'';position:absolute;top:0;right:0;bottom:0;width:35px; background:linear-gradient(90deg,transparent,rgba(var(--rgb-main),.35)); animation:shim 2.8s ease-in-out infinite;}
-@keyframes shim{0%,100%{opacity:0;}50%{opacity:1;}}
-
-/* play btn */
-.playbtn{display:inline-flex;align-items:center;gap:10px;text-decoration:none; font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500; letter-spacing:.15em;text-transform:uppercase;color:var(--l300); border:1px solid rgba(var(--rgb-main),.18);padding:11px 20px;border-radius:8px; position:relative;overflow:hidden; transition:color .3s,border-color .3s,box-shadow .3s; background:rgba(var(--rgb-main),.05);width:100%;justify-content:center;}
-.playbtn::before{content:'';position:absolute;inset:0; background:linear-gradient(135deg,var(--l700),var(--l500)); transform:scaleX(0);transform-origin:left; transition:transform .36s var(--eo);z-index:0;}
-.playbtn:hover{color:var(--l50);border-color:var(--l500); box-shadow:0 0 22px rgba(var(--rgb-main),.15),0 0 44px rgba(var(--rgb-main),.05);}
-.playbtn:hover::before{transform:scaleX(1);}
-.playbtn span,.playbtn svg{position:relative;z-index:1;}
-.playbtn svg{width:14px;height:14px;transition:transform .3s var(--eo);}
-.playbtn:hover svg{transform:translateX(5px);}
-
-.game-card.is-off .gname, .game-card.is-off .gid {color:rgba(var(--rgb-main),.35);}
-.game-card.is-off .pnum{color:rgba(var(--rgb-main),.22);}
-.game-card.is-off .playbtn{opacity:.45;}
-.errmsg{grid-column:1/-1;padding:3rem;text-align:center; font-family:'JetBrains Mono',monospace;font-size:11px; letter-spacing:.15em;text-transform:uppercase;color:rgba(var(--rgb-main),.2);}
-
-
-/* ─── C2 PANELS CSS (Terminal & Tables) ─── */
-.panel-card { background:var(--card); border:1px solid var(--bdr); border-radius:16px; padding:2rem; backdrop-filter:blur(20px); }
-.panel-card h2 { font-family:'Orbitron'; font-size:1.8rem; margin-bottom:10px; }
-.panel-card p { font-family:'JetBrains Mono'; font-size:12px; color:var(--muted); margin-bottom:20px; }
-
-.terminal { background:rgba(0,0,0,0.4); border:1px solid var(--bdr); border-radius:8px; padding:1.5rem; font-family:'JetBrains Mono'; color:#00ffcc; height:400px; overflow-y:auto; box-shadow: inset 0 0 20px rgba(0,0,0,0.5);}
-.term-line { margin-bottom:8px; font-size:13px; text-shadow: 0 0 5px rgba(0,255,204,0.3);}
-.term-input-wrapper { display:flex; gap:10px; margin-top:15px; background:rgba(var(--rgb-main),0.03); border:1px solid var(--bdr); padding:14px; border-radius:8px;}
-.term-input { flex:1; background:transparent; border:none; color:#00ffcc; font-family:'JetBrains Mono'; font-size:16px; outline:none; }
-
-.action-input { flex:1; background:rgba(var(--rgb-main),0.03); border:1px solid var(--bdr); color:var(--text); padding:14px; border-radius:8px; font-family:'JetBrains Mono'; outline:none; }
-.action-input:focus { border-color:var(--l400); }
-.action-btn { background:var(--l200); color:var(--bg); padding:14px 24px; border:none; border-radius:8px; font-weight:800; cursor:pointer; font-family:'Orbitron'; transition: 0.2s;}
-.action-btn:hover { background:var(--text); transform:scale(1.02); }
-.btn-danger { background:#ff4444; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-family:'JetBrains Mono'; font-size:11px; font-weight:bold; transition: 0.2s;}
-.btn-danger:hover { background:#ff2222; transform:scale(1.05); }
-
-table { width:100%; border-collapse:collapse; font-family:'JetBrains Mono'; font-size:12px; border-radius:8px; overflow:hidden;}
-th, td { padding:16px; text-align:left; border-bottom:1px solid var(--bdr); }
-th { background:rgba(var(--rgb-main),0.05); color:var(--l300); font-weight:bold; letter-spacing:1px;}
-tr:hover td { background:rgba(var(--rgb-main),0.02); }
-
-.cmd-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:15px;}
-.cmd-box { background:rgba(var(--rgb-main),0.03); border:1px solid var(--bdr); padding:20px; border-radius:8px; font-family:'JetBrains Mono'; transition:0.2s; border-left: 3px solid var(--l400);}
-.cmd-box:hover { transform: translateY(-3px); border-left-color: var(--l100); background:rgba(var(--rgb-main),0.06);}
-.cmd-box span { display:block; color:var(--muted); font-size:11px; margin-top:8px;}
-
-/* footer */
-footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--bdr);
+/* SECTION HEAD */
+.section-head{
   display:flex;align-items:center;justify-content:space-between;
-  animation:fi .6s .35s var(--eo) both;}
-.fl{font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:.1em;color:rgba(var(--rgb-main),.25);}
+  margin-bottom:1.5rem;
+}
+.section-title{
+  font-family:var(--mono);font-size:9px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--text-3);
+}
+.live-indicator{
+  display:flex;align-items:center;gap:7px;
+  font-family:var(--mono);font-size:9px;color:var(--text-3);letter-spacing:.1em;
+}
+.live-indicator .pulse-dot{
+  width:4px;height:4px;
+  background:rgba(255,255,255,0.5);
+}
 
-/* anims */
-@keyframes sD{from{opacity:0;transform:translateY(-16px);}to{opacity:1;transform:translateY(0);}}
-@keyframes cR{from{opacity:0;transform:translateY(26px);}to{opacity:1;transform:translateY(0);}}
-@keyframes fi{from{opacity:0;}to{opacity:1;}}
+/* GAME GRID */
+#games{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+  gap:1px;
+  background:var(--border);
+  border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;
+}
+
+/* GAME CARD */
+.game-card{
+  background:var(--surface);
+  padding:1.8rem;position:relative;overflow:hidden;
+  transition:background .35s var(--ease-out);
+  cursor:default;
+}
+.game-card:hover{background:var(--surface2);}
+
+/* Thumbnail bg */
+.card-thumb{
+  position:absolute;inset:0;background-size:cover;background-position:center;
+  opacity:0;filter:grayscale(100%) blur(6px);
+  transition:opacity .6s var(--ease-out),filter .6s var(--ease-out),transform .6s var(--ease-out);
+}
+.game-card:hover .card-thumb{opacity:0.06;filter:grayscale(100%) blur(2px);transform:scale(1.04);}
+
+.card-inner{position:relative;z-index:1;}
+
+.card-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:1.4rem;
+}
+.card-idx{
+  font-family:var(--mono);font-size:10px;color:var(--text-3);letter-spacing:.08em;
+}
+.status-pill{
+  display:inline-flex;align-items:center;gap:5px;
+  font-family:var(--mono);font-size:9px;letter-spacing:.14em;
+  text-transform:uppercase;padding:4px 10px;border-radius:999px;
+  transition:all .3s;
+}
+.status-pill.live{
+  background:rgba(255,255,255,0.07);
+  color:rgba(255,255,255,0.7);
+  border:1px solid rgba(255,255,255,0.12);
+}
+.status-pill.offline{
+  background:rgba(255,255,255,0.03);
+  color:var(--text-3);
+  border:1px solid var(--border);
+}
+.s-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0;}
+.live .s-dot{background:rgba(255,255,255,0.7);animation:pulse-glow 2s ease-in-out infinite;}
+.offline .s-dot{background:var(--text-3);}
+
+.game-name{
+  font-family:var(--display);font-size:1.15rem;font-weight:700;
+  letter-spacing:-.02em;color:var(--text);line-height:1.25;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  display:flex;align-items:center;gap:8px;
+}
+.game-id{
+  font-family:var(--mono);font-size:9px;color:var(--text-3);
+  margin:5px 0 1.4rem;letter-spacing:.05em;
+}
+
+.past-names-icon{
+  color:var(--text-3);cursor:help;flex-shrink:0;position:relative;
+  transition:color .2s;
+}
+.past-names-icon:hover{color:var(--text-2);}
+.past-names-icon::after{
+  content:attr(data-tip);
+  position:absolute;bottom:130%;left:50%;transform:translateX(-50%);
+  background:var(--surface3);border:1px solid var(--border-hi);
+  padding:7px 10px;border-radius:8px;font-family:var(--mono);font-size:9px;
+  color:var(--text-2);white-space:nowrap;
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:all .2s var(--ease-out);
+  box-shadow:0 8px 24px rgba(0,0,0,0.5);
+  z-index:20;
+}
+.past-names-icon:hover::after{opacity:1;visibility:visible;bottom:110%;}
+
+/* PLAYER BAR */
+.player-section{margin:0 0 1.4rem;}
+.player-header{
+  display:flex;align-items:baseline;
+  justify-content:space-between;margin-bottom:.6rem;
+}
+.player-label{
+  font-family:var(--mono);font-size:9px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--text-3);
+}
+.player-count{
+  font-family:var(--display);font-size:1.5rem;font-weight:700;
+  letter-spacing:-.03em;color:var(--text-2);
+  font-variant-numeric:tabular-nums;
+  transition:color .3s;
+}
+.game-card:hover .player-count{color:var(--text);}
+.srv-tag{
+  font-size:9px;background:var(--surface3);
+  border:1px solid var(--border);
+  padding:2px 7px;border-radius:5px;
+  margin-left:6px;vertical-align:middle;
+  font-family:var(--mono);color:var(--text-3);
+}
+
+.bar-track{
+  height:2px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;
+}
+.bar-fill{
+  height:100%;border-radius:2px;width:0%;
+  background:linear-gradient(90deg,var(--text-3),var(--text));
+  transition:width 1.2s var(--ease-out);position:relative;overflow:hidden;
+}
+.bar-fill::after{
+  content:'';position:absolute;top:0;right:0;bottom:0;width:40px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.4));
+  animation:bar-shimmer 3s ease-in-out infinite;
+}
+@keyframes bar-shimmer{0%,100%{opacity:0;}50%{opacity:1;}}
+
+/* JOIN BUTTON */
+.join-btn{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  text-decoration:none;width:100%;padding:11px 16px;border-radius:9px;
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);
+  color:var(--text-3);
+  transition:all .35s var(--ease-out);
+  position:relative;overflow:hidden;
+}
+.join-btn::before{
+  content:'';position:absolute;inset:0;
+  background:rgba(255,255,255,0);
+  transition:background .35s var(--ease-out);
+}
+.join-btn:hover{
+  color:var(--text);border-color:var(--border-hi);
+  background:rgba(255,255,255,0.07);
+  transform:translateY(-1px);
+  box-shadow:0 4px 20px rgba(0,0,0,0.4);
+}
+.join-btn svg{
+  width:13px;height:13px;
+  transition:transform .35s var(--ease-out);flex-shrink:0;
+}
+.join-btn:hover svg{transform:translateX(4px);}
+
+/* OFFLINE CARD */
+.game-card.is-off .game-name{color:var(--text-3);}
+.game-card.is-off .player-count{color:var(--text-3);}
+.game-card.is-off .join-btn{opacity:0.4;pointer-events:none;}
+
+/* ERROR MSG */
+.err-msg{
+  grid-column:1/-1;padding:4rem;text-align:center;
+  font-family:var(--mono);font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--text-3);
+}
+
+/* PANEL */
+.panel{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:2.5rem;
+}
+.panel-title{
+  font-family:var(--display);font-size:1.75rem;font-weight:800;
+  letter-spacing:-.03em;margin-bottom:6px;
+}
+.panel-sub{
+  font-family:var(--mono);font-size:11px;color:var(--text-3);
+  margin-bottom:2rem;line-height:1.6;
+}
+
+/* TERMINAL */
+.terminal{
+  background:rgba(0,0,0,0.5);border:1px solid var(--border);
+  border-radius:10px;padding:1.5rem;
+  font-family:var(--mono);color:#e0e0e0;
+  height:380px;overflow-y:auto;
+  font-size:12.5px;line-height:1.7;
+  box-shadow:inset 0 2px 12px rgba(0,0,0,0.6);
+}
+.term-line{margin-bottom:2px;}
+.term-input-row{
+  display:flex;align-items:center;gap:12px;
+  margin-top:14px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;padding:13px 16px;
+  transition:border-color .2s;
+}
+.term-input-row:focus-within{border-color:var(--border-hi);}
+.term-prompt{font-family:var(--mono);font-size:14px;color:var(--text-3);}
+.term-input{
+  flex:1;background:transparent;border:none;
+  color:var(--text);font-family:var(--mono);font-size:13px;
+  outline:none;caret-color:var(--text);
+}
+
+/* TABLE */
+.table-wrap{border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px;}
+th,td{padding:14px 16px;text-align:left;border-bottom:1px solid var(--border);}
+tr:last-child td{border-bottom:none;}
+th{background:rgba(255,255,255,0.025);color:var(--text-3);
+   letter-spacing:.14em;font-size:9px;text-transform:uppercase;}
+tr:hover td{background:rgba(255,255,255,0.018);}
+
+/* ACTION ROW */
+.action-row{display:flex;gap:10px;margin-bottom:2rem;}
+.action-input{
+  flex:1;background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);padding:13px 16px;border-radius:10px;
+  font-family:var(--mono);font-size:12px;outline:none;
+  transition:border-color .2s;
+}
+.action-input:focus{border-color:var(--border-hi);}
+.action-input::placeholder{color:var(--text-3);}
+.action-btn{
+  background:var(--text);color:var(--bg);padding:13px 22px;
+  border:none;border-radius:10px;font-family:var(--display);
+  font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  cursor:pointer;transition:all .25s var(--ease-out);white-space:nowrap;
+}
+.action-btn:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(255,255,255,0.08);}
+.btn-revoke{
+  background:rgba(255,255,255,0.06);color:var(--text-3);
+  border:1px solid var(--border);padding:6px 14px;border-radius:7px;
+  font-family:var(--mono);font-size:9px;letter-spacing:.1em;
+  text-transform:uppercase;cursor:pointer;transition:all .2s;
+}
+.btn-revoke:hover{background:rgba(255,80,80,0.12);color:#ff5555;border-color:rgba(255,80,80,0.25);}
+
+/* CMD GRID */
+.cmd-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;
+}
+.cmd-box{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;padding:18px;
+  border-left:2px solid var(--border-hi);
+  font-family:var(--mono);font-size:12px;color:var(--text-2);
+  transition:all .25s var(--ease-out);
+}
+.cmd-box:hover{transform:translateY(-2px);border-left-color:var(--text);
+  background:var(--surface3);}
+.cmd-box span{display:block;color:var(--text-3);font-size:10px;margin-top:6px;}
+
+/* SCRIPT TEXTAREA */
+.script-area{
+  width:100%;height:320px;
+  background:rgba(0,0,0,0.4);border:1px solid var(--border);
+  color:rgba(255,255,255,0.6);padding:1.5rem;border-radius:10px;
+  font-family:var(--mono);font-size:11px;line-height:1.7;
+  outline:none;resize:vertical;
+}
+
+/* FOOTER */
+footer{
+  margin-top:4rem;padding-top:1.5rem;
+  border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.footer-txt{
+  font-family:var(--mono);font-size:9px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--text-3);
+}
+
+/* TRANSITIONS */
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important;}
+}
 
 @media(max-width:720px){
-  #stats{grid-template-columns:repeat(2,1fr);}
-  .st:nth-child(2){border-right:none;}
+  .stats-strip{grid-template-columns:repeat(2,1fr);}
+  .stat:nth-child(2){border-right:none;}
   header{flex-direction:column;align-items:flex-start;}
-  .hr{text-align:left;}.hbadges{justify-content:flex-start;}
+  .header-right{text-align:left;}
+  .header-badges{justify-content:flex-start;}
+  .tabs{flex-wrap:nowrap;}
 }
 </style>
 </head>
 <body>
 
-<canvas id="bgc"></canvas>
-
-<!-- AUTHENTICATION -->
-<div id="auth-modal">
-    <div class="auth-box">
-        <h1 style="font-size:2.5rem; margin-bottom:5px;">AdminPlus</h1>
-        <p style="color:var(--muted); margin-bottom:30px; font-family:'JetBrains Mono'; font-size:12px; letter-spacing:1px;">C2 SECURE LOGIN</p>
-        <input type="text" id="auth-user" placeholder="Roblox Username (e.g. DIMAZ)" autocomplete="off" />
-        <input type="password" id="auth-key" placeholder="License Key" autocomplete="off" />
-        <input type="text" id="auth-game" placeholder="Target Game ID (Optional if Global)" value="130877407176672" autocomplete="off" />
-        <button class="auth-btn" onclick="login()">INITIALIZE UPLINK</button>
-    </div>
+<div class="ambient">
+  <div class="ambient-orb"></div>
+  <div class="ambient-orb"></div>
 </div>
 
-<div id="app">
-
-  <header>
-    <div class="hl">
-      <h1>C2 Dashboard</h1>
-      <div class="htag" id="conn-info">Awaiting Authorization...</div>
+<!-- AUTH -->
+<div id="auth-modal">
+  <div class="auth-box">
+    <div class="auth-logo">AdminPlus</div>
+    <div class="auth-sub">C2 Secure Login</div>
+    <div class="field-group">
+      <input class="field" type="text" id="auth-user" placeholder="Roblox Username" autocomplete="off"/>
+      <input class="field" type="password" id="auth-key" placeholder="License Key" autocomplete="off"/>
+      <input class="field" type="text" id="auth-game" placeholder="Game ID (optional)" value="130877407176672" autocomplete="off"/>
     </div>
-    <div class="hr">
-      <div id="clk">00:00:00</div>
-      <div class="hbadges">
-        <div class="lbadge"><span class="ldot"></span>SECURE STREAM</div>
-        <button id="sndbtn" onclick="toggleSnd()">SFX ON</button>
-        <button id="thmbtn" onclick="toggleTheme()">THEME</button>
+    <button class="auth-btn" onclick="login()">Initialize Uplink</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div>
+      <div class="wordmark">C2 <span>Dashboard</span></div>
+      <div class="conn-tag" id="conn-info">Awaiting authorization</div>
+    </div>
+    <div class="header-right">
+      <div class="clock" id="clk">00:00:00</div>
+      <div class="header-badges">
+        <div class="badge"><span class="pulse-dot"></span>Secure Stream</div>
+        <button class="icon-btn" onclick="toggleSnd()" id="sndbtn">SFX On</button>
+        <button class="icon-btn" id="thmbtn" style="display:none">Theme</button>
       </div>
     </div>
   </header>
 
+  <!-- TABS -->
   <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('tab-games')">Active Servers</button>
-      <button class="tab-btn" onclick="switchTab('tab-exec')">Terminal Executor</button>
-      <button class="tab-btn" onclick="switchTab('tab-whitelist')">Cloud Whitelist</button>
-      <button class="tab-btn" onclick="switchTab('tab-logs')">Action Logs</button>
-      <button class="tab-btn" onclick="switchTab('tab-cmd')">Command List</button>
-      <button class="tab-btn" onclick="switchTab('tab-scripts')">Installer Script</button>
+    <button class="tab-btn active" onclick="switchTab('tab-games',this)">Active Servers</button>
+    <button class="tab-btn" onclick="switchTab('tab-exec',this)">Terminal</button>
+    <button class="tab-btn" onclick="switchTab('tab-whitelist',this)">Whitelist</button>
+    <button class="tab-btn" onclick="switchTab('tab-logs',this)">Action Logs</button>
+    <button class="tab-btn" onclick="switchTab('tab-cmd',this)">Commands</button>
+    <button class="tab-btn" onclick="switchTab('tab-scripts',this)">Installer</button>
   </div>
 
-  <!-- LIVE SERVERS TAB (Your original view) -->
+  <!-- SERVERS TAB -->
   <div id="tab-games" class="tab-content active">
-      <div id="stats">
-        <div class="st"><div class="stl">Total Games</div><div class="stv" id="sv-total">—</div></div>
-        <div class="st"><div class="stl">Online</div><div class="stv g" id="sv-online">—</div></div>
-        <div class="st"><div class="stl">Offline</div><div class="stv d" id="sv-offline">—</div></div>
-        <div class="st">
-          <div class="stl">Total Players</div>
-          <div class="stv" id="sv-players">—</div>
-          <div class="stsub" id="sv-psub"></div>
-        </div>
-        <div class="st">
-          <div class="stl">Most Popular Game</div>
-          <div class="stv" id="sv-peak" style="font-size:1.35rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">—</div>
-          <div class="stsub" id="sv-peakn"></div>
-        </div>
+    <div class="stats-strip">
+      <div class="stat">
+        <div class="stat-label">Total Games</div>
+        <div class="stat-value" id="sv-total">—</div>
       </div>
-
-      <div class="shead">
-        <div class="stitle">Active Servers</div>
-        <div id="lupd">Waiting for data...</div>
+      <div class="stat">
+        <div class="stat-label">Online</div>
+        <div class="stat-value" id="sv-online">—</div>
       </div>
+      <div class="stat">
+        <div class="stat-label">Offline</div>
+        <div class="stat-value dim" id="sv-offline">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Total Players</div>
+        <div class="stat-value" id="sv-players">—</div>
+        <div class="stat-sub" id="sv-psub"></div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Top Game</div>
+        <div class="stat-value" id="sv-peak" style="font-size:1.3rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</div>
+        <div class="stat-sub" id="sv-peakn"></div>
+      </div>
+    </div>
 
-      <div id="games"></div>
+    <div class="section-head">
+      <div class="section-title">Live Servers</div>
+      <div class="live-indicator" id="lupd"><span class="pulse-dot"></span>Waiting…</div>
+    </div>
+    <div id="games"></div>
   </div>
 
-  <!-- TERMINAL EXECUTOR TAB -->
+  <!-- TERMINAL TAB -->
   <div id="tab-exec" class="tab-content">
-      <div class="panel-card">
-          <h2>Terminal Executor</h2>
-          <p>Inject commands directly into the active Firebase stream.</p>
-          <div class="terminal" id="term-out">
-              <div class="term-line">AdminPlus SECURE SHELL v1.0.0</div>
-              <div class="term-line">Connected. Type a command to execute across active instances.</div>
-          </div>
-          <div class="term-input-wrapper">
-              <span style="color:#00ffcc; font-family:'JetBrains Mono'; font-size:16px;">></span>
-              <input type="text" class="term-input" id="term-in" placeholder="e.g., kick Player1 exploiting" onkeypress="handleCommand(event)" autocomplete="off"/>
-          </div>
+    <div class="panel">
+      <div class="panel-title">Terminal</div>
+      <div class="panel-sub">Inject commands directly into the active Firebase stream.</div>
+      <div class="terminal" id="term-out">
+        <div class="term-line" style="color:var(--text-3)">AdminPlus Shell v1.0 · Connected</div>
+        <div class="term-line" style="color:var(--text-3);margin-bottom:10px;">Type a command to execute across active instances.</div>
       </div>
+      <div class="term-input-row">
+        <span class="term-prompt">›</span>
+        <input type="text" class="term-input" id="term-in"
+          placeholder="e.g. kick Player1 exploiting"
+          onkeypress="handleCommand(event)" autocomplete="off"/>
+      </div>
+    </div>
   </div>
 
   <!-- WHITELIST TAB -->
   <div id="tab-whitelist" class="tab-content">
-      <div class="panel-card">
-          <h2>Cloud Access Control</h2>
-          <p>Users added here instantly receive admin UI and execution rights in any game running the script.</p>
-          
-          <div style="display:flex; gap:10px; margin-bottom:30px;">
-              <input type="text" id="new-admin" class="action-input" placeholder="Enter exact Roblox Username" autocomplete="off">
-              <button class="action-btn" onclick="addAdmin()">GRANT ACCESS</button>
-          </div>
-
-          <div style="border:1px solid var(--bdr); border-radius:8px; overflow:hidden;">
-              <table>
-                  <thead><tr><th>ROBLOX USERNAME</th><th>ACCESS LEVEL</th><th>ACTION</th></tr></thead>
-                  <tbody id="wl-body">
-                      <tr><td colspan="3" style="color:var(--muted); text-align:center;">Loading cloud whitelist...</td></tr>
-                  </tbody>
-              </table>
-          </div>
+    <div class="panel">
+      <div class="panel-title">Access Control</div>
+      <div class="panel-sub">Manage admin access. Changes apply instantly to all live servers.</div>
+      <div class="action-row">
+        <input type="text" id="new-admin" class="action-input" placeholder="Exact Roblox Username" autocomplete="off"/>
+        <button class="action-btn" onclick="addAdmin()">Grant Access</button>
       </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Username</th><th>Access Level</th><th>Action</th></tr></thead>
+          <tbody id="wl-body">
+            <tr><td colspan="3" style="color:var(--text-3);text-align:center;">Loading whitelist…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <!-- LOGS TAB -->
   <div id="tab-logs" class="tab-content">
-      <div class="panel-card">
-          <h2>Action Logs</h2>
-          <p>Real-time audit log of all commands executed through this panel.</p>
-          <div style="border:1px solid var(--bdr); border-radius:8px; overflow:hidden;">
-              <table>
-                  <thead><tr><th>TIME</th><th>ADMIN</th><th>COMMAND</th><th>TARGET</th><th>STATUS</th></tr></thead>
-                  <tbody id="log-body">
-                      <tr><td colspan="5" style="color:var(--muted); text-align:center;">Listening for executed payloads...</td></tr>
-                  </tbody>
-              </table>
-          </div>
+    <div class="panel">
+      <div class="panel-title">Action Logs</div>
+      <div class="panel-sub">Real-time audit of all commands executed through this panel.</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Time</th><th>Admin</th><th>Command</th><th>Target</th><th>Status</th></tr></thead>
+          <tbody id="log-body">
+            <tr><td colspan="5" style="color:var(--text-3);text-align:center;">Listening for payloads…</td></tr>
+          </tbody>
+        </table>
       </div>
+    </div>
   </div>
 
-  <!-- COMMANDS LIST TAB -->
+  <!-- COMMANDS TAB -->
   <div id="tab-cmd" class="tab-content">
-      <div class="panel-card">
-          <h2>Command List</h2>
-          <p>Available commands for the Terminal Executor.</p>
-          <div class="cmd-list">
-              <div class="cmd-box">kick [user] [reason]<span>Disconnects player from server</span></div>
-              <div class="cmd-box">kill [user]<span>Sets humanoid health to 0</span></div>
-              <div class="cmd-box">freeze [user]<span>Anchors root part</span></div>
-              <div class="cmd-box">announce [message]<span>Displays global broadcast</span></div>
-              <div class="cmd-box">shutdown<span>Closes server instance safely</span></div>
-              <div class="cmd-box">require [asset_id]<span>Executes external ModuleScript</span></div>
-          </div>
+    <div class="panel">
+      <div class="panel-title">Commands</div>
+      <div class="panel-sub">Available payloads for the Terminal Executor.</div>
+      <div class="cmd-grid">
+        <div class="cmd-box">kick [user] [reason]<span>Disconnects player from server</span></div>
+        <div class="cmd-box">kill [user]<span>Sets humanoid health to 0</span></div>
+        <div class="cmd-box">freeze [user]<span>Anchors root part in place</span></div>
+        <div class="cmd-box">announce [msg]<span>Displays global broadcast</span></div>
+        <div class="cmd-box">shutdown<span>Closes server instance safely</span></div>
+        <div class="cmd-box">require [asset_id]<span>Executes external ModuleScript</span></div>
       </div>
+    </div>
   </div>
 
-  <!-- SCRIPT INSTALLER TAB -->
+  <!-- INSTALLER TAB -->
   <div id="tab-scripts" class="tab-content">
-      <div class="panel-card">
-          <h2>Plug-and-Play Installer</h2>
-          <p>Give this code to your customers. It auto-registers their game to this dashboard.</p>
-          <textarea readonly style="width:100%; height:350px; background:rgba(0,0,0,0.5); border:1px solid var(--bdr); color:#00ffcc; padding:1.5rem; border-radius:8px; font-family:'JetBrains Mono'; font-size:11px; outline:none; resize:vertical; line-height:1.5;">
+    <div class="panel">
+      <div class="panel-title">Installer Script</div>
+      <div class="panel-sub">Paste this into ServerScriptService. It auto-registers the game to this dashboard.</div>
+      <textarea class="script-area" readonly>
 -- ==========================================
 -- ADMINPLUS: AUTO-INSTALLER
 -- ==========================================
 -- 1. Create a Script in ServerScriptService.
 -- 2. Paste the final Master Script provided by Gemini here.
--- 3. The script will automatically pull from your Firebase whitelist and report server status.
-          </textarea>
-      </div>
+-- 3. The script will automatically pull from your Firebase
+--    whitelist and report server status to this dashboard.
+      </textarea>
+    </div>
   </div>
 
   <footer>
-    <div class="fl">AdminPlus C2 Engine · WebSockets Active</div>
+    <div class="footer-txt">AdminPlus C2 Engine · WebSockets Active</div>
+    <div class="footer-txt" id="ft-time"></div>
   </footer>
-
 </div>
 
 <script type="module">
@@ -413,101 +734,40 @@ const app = initializeApp({ databaseURL: "https://tryloser-com-default-rtdb.fire
 const db = getDatabase(app);
 const gamesRef = ref(db, "games");
 
-let currentUser = "";
-let currentKey = "";
-let currentGame = "";
+let currentUser = "", currentKey = "", currentGame = "";
 
-/* ─── GLOBAL WINDOW EXPORTS ─── */
+/* ─── AUTH ─── */
 window.login = function() {
-    currentUser = document.getElementById('auth-user').value.trim();
-    currentKey = document.getElementById('auth-key').value.trim();
-    currentGame = document.getElementById('auth-game').value.trim() || "GLOBAL";
-    
-    if(!currentUser || !currentKey) return alert("Fill required authentication fields.");
-    
-    document.getElementById('auth-modal').style.opacity = '0';
-    setTimeout(() => {
-        document.getElementById('auth-modal').style.display = 'none';
-        document.getElementById('app').style.display = 'block';
-        if(!muted) SFX.online();
-    }, 500);
+  currentUser = document.getElementById('auth-user').value.trim();
+  currentKey  = document.getElementById('auth-key').value.trim();
+  currentGame = document.getElementById('auth-game').value.trim() || "GLOBAL";
+  if(!currentUser || !currentKey) return alert("Fill required fields.");
 
-    document.getElementById('conn-info').innerText = `LICENSED TO: ${currentUser} | TARGET: ${currentGame}`;
-    initFirebaseC2();
-}
+  const modal = document.getElementById('auth-modal');
+  modal.classList.add('hiding');
+  setTimeout(() => {
+    modal.style.display = 'none';
+    const appEl = document.getElementById('app');
+    appEl.style.display = 'block';
+    if(!muted) SFX.online();
+  }, 600);
+  document.getElementById('conn-info').textContent = `Licensed to ${currentUser} · ${currentGame}`;
+  initFirebaseC2();
+};
 
-window.switchTab = function(tabId) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-    event.target.classList.add('active');
-    if(!muted) SFX.click();
-}
-
-/* ─── THEME TOGGLE ─── */
-let muted=false;
-function toggleTheme(){
-  document.body.classList.toggle('light');
+/* ─── TABS ─── */
+window.switchTab = function(tabId, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  if(btn) btn.classList.add('active');
   if(!muted) SFX.click();
-}
-window.toggleTheme = toggleTheme;
+};
 
-/* ─── PARTICLES ─── */
-(()=>{
-  const c=document.getElementById('bgc');
-  const x=c.getContext('2d');
-  let W,H,pts=[];
-  const N=95,L=125;
-
-  function resize(){W=c.width=innerWidth;H=c.height=innerHeight;}
-
-  function P(){
-    this.x=Math.random()*W;this.y=Math.random()*H;
-    this.vx=(Math.random()-.5)*.38;this.vy=(Math.random()-.5)*.38;
-    this.r=Math.random()*1.7+.4;this.a=Math.random()*.55+.08;
-  }
-
-  function init(){pts=Array.from({length:N},()=>new P());}
-
-  function draw(){
-    x.clearRect(0,0,W,H);
-    const isLight = document.body.classList.contains('light');
-    const rgb = isLight ? '0,0,0' : '255,255,255';
-
-    [[W*.12,H*.18,300,rgb,.025],[W*.88,H*.78,260,rgb,.02],
-     [W*.5,H*.45,180,rgb,.015],[W*.25,H*.8,200,rgb,.015]].forEach(([bx,by,br,bc,ba])=>{
-      const g=x.createRadialGradient(bx,by,0,bx,by,br);
-      g.addColorStop(0,`rgba(${bc},${ba})`);g.addColorStop(1,'rgba(0,0,0,0)');
-      x.fillStyle=g;x.fillRect(0,0,W,H);
-    });
-
-    for(let i=0;i<pts.length;i++){
-      const p=pts[i];
-      p.x+=p.vx;p.y+=p.vy;
-      if(p.x<0||p.x>W)p.vx*=-1;
-      if(p.y<0||p.y>H)p.vy*=-1;
-      for(let j=i+1;j<pts.length;j++){
-        const q=pts[j];
-        const dx=p.x-q.x,dy=p.y-q.y;
-        const d=Math.sqrt(dx*dx+dy*dy);
-        if(d<L){
-          x.beginPath();x.moveTo(p.x,p.y);x.lineTo(q.x,q.y);
-          x.strokeStyle=`rgba(${rgb},${(1-d/L)*.11})`;
-          x.lineWidth=.5;x.stroke();
-        }
-      }
-      x.beginPath();x.arc(p.x,p.y,p.r,0,Math.PI*2);
-      x.fillStyle=`rgba(${rgb},${p.a})`;x.fill();
-    }
-    requestAnimationFrame(draw);
-  }
-  window.addEventListener('resize',()=>{resize();init();});
-  resize();init();draw();
-})();
-
-/* ─── WEB AUDIO SFX ─── */
-let AC=null;
-function ac(){if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();return AC;}
+/* ─── SFX ─── */
+let muted = false;
+let AC = null;
+function ac(){ if(!AC) AC = new(window.AudioContext||window.webkitAudioContext)(); return AC; }
 function tone(f,t,d,v,delay=0){
   if(muted)return;
   try{
@@ -520,360 +780,263 @@ function tone(f,t,d,v,delay=0){
     o.start(tm);o.stop(tm+d+.05);
   }catch(e){}
 }
-const SFX={
-  hover(){tone(1046,'sine',.07,.022);},
-  load(){
-    tone(523,'sine',.18,.038,0);tone(659,'sine',.18,.038,.09);
-    tone(784,'sine',.22,.038,.18);tone(1047,'sine',.28,.032,.27);
-  },
-  online(){tone(659,'sine',.12,.038,0);tone(880,'sine',.15,.038,.1);},
-  offline(){tone(440,'sine',.12,.028,0);tone(330,'sine',.18,.028,.1);},
-  click(){tone(1200,'square',.04,.018);tone(800,'sine',.06,.018,.02);},
+const SFX = {
+  hover(){ tone(1046,'sine',.07,.018); },
+  load(){ tone(523,'sine',.18,.032,0);tone(659,'sine',.18,.032,.09);tone(784,'sine',.22,.032,.18);tone(1047,'sine',.28,.028,.27); },
+  online(){ tone(659,'sine',.12,.032,0);tone(880,'sine',.15,.032,.1); },
+  offline(){ tone(440,'sine',.12,.022,0);tone(330,'sine',.18,.022,.1); },
+  click(){ tone(1200,'square',.04,.014);tone(800,'sine',.06,.014,.02); },
 };
-function toggleSnd(){
-  muted=!muted;
-  document.getElementById('sndbtn').textContent=muted?'SFX OFF':'SFX ON';
-  if(!muted)SFX.click();
-}
-window.toggleSnd = toggleSnd;
+window.toggleSnd = function(){
+  muted = !muted;
+  document.getElementById('sndbtn').textContent = muted ? 'SFX Off' : 'SFX On';
+  if(!muted) SFX.click();
+};
 
 /* ─── CLOCK ─── */
-const clkEl=document.getElementById('clk');
 function tick(){
-  const n=new Date();
-  clkEl.textContent=[n.getHours(),n.getMinutes(),n.getSeconds()]
-    .map(v=>String(v).padStart(2,'0')).join(':');
+  const n = new Date();
+  const s = [n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');
+  document.getElementById('clk').textContent = s;
+  const ft = document.getElementById('ft-time');
+  if(ft) ft.textContent = s;
 }
-tick();setInterval(tick,1000);
+tick(); setInterval(tick, 1000);
 
 /* ─── COUNT-UP ─── */
-function countUp(el,target){
-  const prev=parseInt(el.dataset.v||'0');
-  el.dataset.v=target;
-  if(prev===target){el.textContent=target.toLocaleString();return;}
-  const dur=650,t0=performance.now();
+function countUp(el, target){
+  const prev = parseInt(el.dataset.v||'0');
+  el.dataset.v = target;
+  if(prev === target){ el.textContent = target.toLocaleString(); return; }
+  const dur=700, t0=performance.now();
   (function s(now){
-    const p=Math.min((now-t0)/dur,1),e=1-Math.pow(1-p,3);
-    el.textContent=Math.round(prev+(target-prev)*e).toLocaleString();
-    p<1?requestAnimationFrame(s):el.textContent=target.toLocaleString();
+    const p=Math.min((now-t0)/dur,1), e=1-Math.pow(1-p,3);
+    el.textContent = Math.round(prev+(target-prev)*e).toLocaleString();
+    p<1 ? requestAnimationFrame(s) : el.textContent = target.toLocaleString();
   })(t0);
 }
 
-/* ─── INITIAL CARD BUILDER ─── */
-let maxP=1;
-function buildCard(data, idx, isTop){
-  const {id, game, isOnline} = data;
+/* ─── BUILD CARD ─── */
+let maxP = 1;
+function buildCard(data, idx){
+  const { id, game, isOnline } = data;
   const name = game.name || 'Unknown';
   const link = game.link || '#';
   const players = game.players || 0;
   const servers = game.serverCount || 0;
-  const barPct = maxP > 0 ? Math.round((players / maxP) * 100) : 0;
-  const pad = String(idx + 1).padStart(2, '0');
-  
+  const barPct = maxP > 0 ? Math.round((players/maxP)*100) : 0;
+  const pad = String(idx+1).padStart(2,'0');
+
   const pastNames = game.pastNames || [];
-  const hasPastNames = pastNames.length > 0;
-  const pastNamesStr = hasPastNames ? pastNames.join(', ').replace(/"/g, '&quot;') : '';
-  const rewindHTML = hasPastNames ? `<div class="rewind-icon" data-tooltip="Past names: ${pastNamesStr}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></div>` : '';
+  const rewindHTML = pastNames.length > 0
+    ? `<span class="past-names-icon" data-tip="Past: ${pastNames.join(', ').replace(/"/g,'&quot;')}">
+         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+           <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+         </svg>
+       </span>` : '';
 
   const imgURL = `https://www.roblox.com/asset-thumbnail/image?assetId=${id}&width=768&height=432&format=png`;
+  const card = document.createElement('div');
+  card.className = 'game-card' + (isOnline ? '' : ' is-off');
+  card.dataset.id = id;
+  card.style.animationDelay = (idx * .06) + 's';
 
-  const card=document.createElement('div');
-  card.className='game-card'+(isOnline?'':' is-off')+(isTop?' top-game':'');
-  card.dataset.id=id;
-  card.style.animationDelay=(idx*.075)+'s';
-
-  card.innerHTML=`
-    <div class="card-bg" style="background-image: url('${imgURL}');"></div>
-    <div class="card-content">
-        <div class="cidx">
-          <span>${pad}</span>
-          <div style="display:flex; gap:8px;">
-            ${isTop?'<span class="spill top">TOP GAME</span>':''}
-            <span class="spill ${isOnline?'live':'off'}">
-              <span class="pdot"></span>${isOnline?'LIVE':'OFFLINE'}
-            </span>
-          </div>
+  card.innerHTML = `
+    <div class="card-thumb" style="background-image:url('${imgURL}');"></div>
+    <div class="card-inner">
+      <div class="card-header">
+        <span class="card-idx">${pad}</span>
+        <span class="status-pill ${isOnline?'live':'offline'}">
+          <span class="s-dot"></span>${isOnline?'Live':'Offline'}
+        </span>
+      </div>
+      <div class="game-name">${name}${rewindHTML}</div>
+      <div class="game-id">ID: ${id}</div>
+      <div class="player-section">
+        <div class="player-header">
+          <span class="player-label">Players</span>
+          <span class="player-count">${players.toLocaleString()}${servers>0?`<span class="srv-tag">${servers} svrs</span>`:''}</span>
         </div>
-        <div class="gname-wrapper">
-           <div class="gname" title="${name}">${name}</div>
-           ${rewindHTML}
-        </div>
-        <div class="gid">ID: ${id}</div>
-        <div class="psec">
-          <div class="phdr">
-            <span class="plbl">Players</span>
-            <span class="pnum">${players.toLocaleString()}${servers > 0 ? `<span class="srv-badge">${servers} SVRS</span>` : ''}</span>
-          </div>
-          <div class="pbtrack">
-            <div class="pbfill" data-fill="${barPct}"></div>
-          </div>
-        </div>
-        <a href="${link}" target="_blank" rel="noopener" class="playbtn">
-          <span>JOIN</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </a>
+        <div class="bar-track"><div class="bar-fill" data-fill="${barPct}"></div></div>
+      </div>
+      <a href="${link}" target="_blank" rel="noopener" class="join-btn">
+        <span>Join Server</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </a>
     </div>`;
 
-  card.addEventListener('mouseenter',()=>SFX.hover());
-  card.querySelector('.playbtn').addEventListener('mouseenter',()=>SFX.click());
+  card.addEventListener('mouseenter', () => SFX.hover());
   return card;
 }
 
-/* ─── REALTIME IN-PLACE DOM UPDATER (Live Servers) ─── */
-let currentData = {};
-let firstLoad = true, prevSt = {};
+/* ─── RENDER ─── */
+let currentData = {}, firstLoad = true, prevSt = {};
 
-function renderGames() {
-  const gContainer = document.getElementById('games');
-  
-  if(!currentData || Object.keys(currentData).length === 0){
-      if(!gContainer.querySelector('.errmsg')) {
-         gContainer.innerHTML='<div class="errmsg">Waiting for game data...</div>';
-      }
-      return;
+function renderGames(){
+  const gc = document.getElementById('games');
+  if(!currentData || Object.keys(currentData).length===0){
+    if(!gc.querySelector('.err-msg')) gc.innerHTML='<div class="err-msg">Waiting for game data…</div>';
+    return;
   } else {
-      if(gContainer.querySelector('.errmsg')) { gContainer.innerHTML = ''; }
+    if(gc.querySelector('.err-msg')) gc.innerHTML='';
   }
 
-  const entries = Object.entries(currentData).filter(([,v]) => {
-      return v && !v.isBanned && !String(v.name).includes("Content Deleted");
-  });
-  
+  const entries = Object.entries(currentData).filter(([,v]) => v && !v.isBanned && !String(v.name).includes("Content Deleted"));
   let online=0, totalP=0, totalServers=0;
-  maxP=1;
+  maxP = 1;
 
   const processed = entries.map(([id, gameData]) => {
-    let onlinePlayers = 0;
-    let serverCount = 0;
-
-    if (gameData.servers) {
+    let onlinePlayers=0, serverCount=0;
+    if(gameData.servers){
       Object.values(gameData.servers).forEach(srv => {
-        if (Date.now()/1000 - srv.lastUpdate < 15) {
-          onlinePlayers += srv.players || 0;
-          serverCount++;
-        }
+        if(Date.now()/1000 - srv.lastUpdate < 15){ onlinePlayers += srv.players||0; serverCount++; }
       });
     }
-
-    const isOnline = serverCount > 0 && onlinePlayers > 0;
-    
-    if(isOnline) {
-      online++; 
-      totalP += onlinePlayers;
-      totalServers += serverCount;
-      if(onlinePlayers > maxP) maxP = onlinePlayers;
-    }
-
-    return { id, isOnline, game: { ...gameData, players: onlinePlayers, serverCount: serverCount } };
+    const isOnline = serverCount>0 && onlinePlayers>0;
+    if(isOnline){ online++; totalP+=onlinePlayers; totalServers+=serverCount; if(onlinePlayers>maxP)maxP=onlinePlayers; }
+    return { id, isOnline, game:{...gameData, players:onlinePlayers, serverCount} };
   });
 
-  const total = processed.length;
-  const offline = total - online;
-
-  const peak = processed.reduce((b, curr) => {
-    return curr.game.players > b.game.players ? curr : b;
-  }, processed[0] || {id: '—', game: {players: 0, name: '—'}});
+  const total=processed.length, offline=total-online;
+  const peak=processed.reduce((b,c)=>c.game.players>b.game.players?c:b, processed[0]||{id:'—',game:{players:0,name:'—'}});
 
   countUp(document.getElementById('sv-total'), total);
   countUp(document.getElementById('sv-online'), online);
   countUp(document.getElementById('sv-offline'), offline);
   countUp(document.getElementById('sv-players'), totalP);
-  document.getElementById('sv-psub').textContent = online>0?`across ${totalServers} live server${totalServers!==1?'s':''}`:'all servers offline';
-      
-  document.getElementById('sv-peak').textContent = peak.game.name || '—';
-  document.getElementById('sv-peakn').textContent = (peak.game.players || 0).toLocaleString() + ' players';
-  document.getElementById('lupd').textContent = '• DATA SYNCED INSTANTLY';
+  document.getElementById('sv-psub').textContent = online>0 ? `across ${totalServers} server${totalServers!==1?'s':''}` : 'all offline';
+  document.getElementById('sv-peak').textContent = peak.game.name||'—';
+  document.getElementById('sv-peakn').textContent = (peak.game.players||0).toLocaleString()+' players';
+  document.getElementById('lupd').innerHTML = '<span class="pulse-dot"></span>Synced live';
 
   const seenIds = new Set();
 
-  processed.forEach((data, i)=>{
+  processed.forEach((data, i) => {
     seenIds.add(data.id);
-    const isTop = (data.id === peak.id && peak.game.players > 0);
-    const barPct = maxP > 0 ? Math.round((data.game.players / maxP) * 100) : 0;
-    const pad = String(i + 1).padStart(2, '0');
+    const isTop = data.id===peak.id && peak.game.players>0;
+    const barPct = maxP>0 ? Math.round((data.game.players/maxP)*100) : 0;
+    const pad = String(i+1).padStart(2,'0');
 
-    let card = gContainer.querySelector(`.game-card[data-id="${data.id}"]`);
+    let card = gc.querySelector(`.game-card[data-id="${data.id}"]`);
 
-    if (!card) {
-      card = buildCard(data, i, isTop);
-      gContainer.appendChild(card);
-      requestAnimationFrame(()=>requestAnimationFrame(()=>{ card.querySelector('.pbfill').style.width = barPct + '%'; }));
+    if(!card){
+      card = buildCard(data, i);
+      gc.appendChild(card);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        card.querySelector('.bar-fill').style.width = barPct + '%';
+      }));
     } else {
-      const pnum = card.querySelector('.pnum');
-      const serversHTML = data.game.serverCount > 0 ? `<span class="srv-badge">${data.game.serverCount} SVRS</span>` : '';
-      const newPlayersHTML = `${data.game.players.toLocaleString()}${serversHTML}`;
-      if (pnum.innerHTML !== newPlayersHTML) pnum.innerHTML = newPlayersHTML;
+      const pc = card.querySelector('.player-count');
+      const srv = data.game.serverCount>0 ? `<span class="srv-tag">${data.game.serverCount} svrs</span>` : '';
+      const newHTML = `${data.game.players.toLocaleString()}${srv}`;
+      if(pc.innerHTML!==newHTML) pc.innerHTML=newHTML;
 
-      const pbfill = card.querySelector('.pbfill');
-      if (pbfill.dataset.fill !== String(barPct)) {
-        pbfill.dataset.fill = barPct; pbfill.style.width = barPct + '%';
-      }
+      const bf = card.querySelector('.bar-fill');
+      if(bf.dataset.fill!==String(barPct)){ bf.dataset.fill=barPct; bf.style.width=barPct+'%'; }
 
-      const idxSpan = card.querySelector('.cidx > span:first-child');
-      if (idxSpan && idxSpan.textContent !== pad) idxSpan.textContent = pad;
+      const idxSpan = card.querySelector('.card-idx');
+      if(idxSpan && idxSpan.textContent!==pad) idxSpan.textContent=pad;
 
-      const gnameWrapper = card.querySelector('.gname-wrapper');
-      const gnameEl = gnameWrapper.querySelector('.gname');
-      if (gnameEl.textContent !== data.game.name) {
-          gnameEl.textContent = data.game.name;
-          gnameEl.title = data.game.name;
-      }
+      const gn = card.querySelector('.game-name');
+      const firstName = gn.childNodes[0];
+      if(firstName && firstName.nodeType===3 && firstName.textContent!==data.game.name) firstName.textContent=data.game.name;
 
-      if (data.isOnline) { card.classList.remove('is-off'); } 
-      else { card.classList.add('is-off'); }
+      data.isOnline ? card.classList.remove('is-off') : card.classList.add('is-off');
 
-      const statusSpill = card.querySelector('.spill:not(.top)');
-      if (statusSpill) {
-         const newClass = `spill ${data.isOnline ? 'live' : 'off'}`;
-         if (statusSpill.className !== newClass) {
-             statusSpill.className = newClass;
-             statusSpill.innerHTML = `<span class="pdot"></span>${data.isOnline ? 'LIVE' : 'OFFLINE'}`;
-         }
-      }
-
-      if (isTop) {
-         card.classList.add('top-game');
-         if (!card.querySelector('.spill.top')) {
-             const badgeContainer = card.querySelector('.cidx > div');
-             badgeContainer.insertAdjacentHTML('afterbegin', '<span class="spill top">TOP GAME</span>');
-         }
-      } else {
-         card.classList.remove('top-game');
-         const topBadge = card.querySelector('.spill.top');
-         if (topBadge) topBadge.remove();
+      const sp = card.querySelector('.status-pill');
+      if(sp){
+        const nc = `status-pill ${data.isOnline?'live':'offline'}`;
+        if(sp.className!==nc){ sp.className=nc; sp.innerHTML=`<span class="s-dot"></span>${data.isOnline?'Live':'Offline'}`; }
       }
     }
 
-    const currState = data.isOnline ? 'running' : 'offline';
-    if(prevSt[data.id] && prevSt[data.id] !== currState && !firstLoad) {
-        currState === 'running' ? SFX.online() : SFX.offline();
+    const st = data.isOnline?'running':'offline';
+    if(prevSt[data.id] && prevSt[data.id]!==st && !firstLoad){
+      st==='running' ? SFX.online() : SFX.offline();
     }
-    prevSt[data.id] = currState;
+    prevSt[data.id]=st;
   });
 
-  Array.from(gContainer.children).forEach(child => {
-     if (!seenIds.has(child.dataset.id)) { child.remove(); }
-  });
-
+  Array.from(gc.children).forEach(c => { if(!seenIds.has(c.dataset.id)) c.remove(); });
   if(firstLoad){ SFX.load(); firstLoad=false; }
 }
 
-/* ─── C2 FIREBASE INITS (Logs, Terminal, Whitelist) ─── */
-function initFirebaseC2() {
-    // 1. Keep the original Live Games updater running
-    onValue(gamesRef, snap => { currentData = snap.val() || {}; renderGames(); });
-    setInterval(renderGames, 1000);
+/* ─── FIREBASE INIT ─── */
+function initFirebaseC2(){
+  onValue(gamesRef, snap => { currentData=snap.val()||{}; renderGames(); });
+  setInterval(renderGames, 1000);
 
-    // 2. Action Logs Monitoring
-    if (currentGame !== "GLOBAL") {
-        onValue(ref(db, `admin/logs/${currentGame}`), snap => {
-            const data = snap.val() || {};
-            const tbody = document.getElementById('log-body');
-            tbody.innerHTML = "";
-            
-            const logs = Object.values(data).sort((a,b)=>b.time - a.time).slice(0, 50);
-            if(logs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted); text-align:center;">No recent actions logged.</td></tr>';
-            } else {
-                logs.forEach(log => {
-                    const date = new Date(log.time * 1000).toLocaleTimeString();
-                    const color = log.status.includes("SUCCESS") ? "#00ffcc" : "#ff4444";
-                    tbody.innerHTML += `<tr>
-                        <td>${date}</td>
-                        <td style="color:var(--text); font-weight:bold;">${log.admin}</td>
-                        <td style="color:var(--l400);">${log.cmd}</td>
-                        <td>${log.tgt}</td>
-                        <td style="color:${color};">${log.status}</td>
-                    </tr>`;
-                });
-            }
+  if(currentGame!=="GLOBAL"){
+    onValue(ref(db, `admin/logs/${currentGame}`), snap => {
+      const data=snap.val()||{};
+      const tbody=document.getElementById('log-body');
+      tbody.innerHTML="";
+      const logs=Object.values(data).sort((a,b)=>b.time-a.time).slice(0,50);
+      if(logs.length===0){
+        tbody.innerHTML='<tr><td colspan="5" style="color:var(--text-3);text-align:center;">No recent actions logged.</td></tr>';
+      } else {
+        logs.forEach(log => {
+          const date=new Date(log.time*1000).toLocaleTimeString();
+          const c=log.status.includes("SUCCESS")?"rgba(255,255,255,0.7)":"#ff5555";
+          tbody.innerHTML+=`<tr><td>${date}</td><td style="font-weight:600;color:var(--text);">${log.admin}</td><td style="color:var(--text-3);">${log.cmd}</td><td>${log.tgt}</td><td style="color:${c};">${log.status}</td></tr>`;
         });
-    }
-
-    // 3. Global Whitelist Monitoring
-    onValue(ref(db, `admin/global_whitelist`), snap => {
-        const data = snap.val() || {};
-        const tbody = document.getElementById('wl-body');
-        tbody.innerHTML = "";
-        
-        const entries = Object.entries(data).filter(([user, status]) => status === true);
-        
-        if (entries.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" style="color:var(--muted); text-align:center;">No admins in the database.</td></tr>';
-            return;
-        }
-
-        entries.forEach(([user, status]) => {
-            tbody.innerHTML += `<tr>
-                <td style="font-weight:bold; color:var(--text);">${user}</td>
-                <td style="color:var(--l400);">Full Administrator</td>
-                <td><button class="btn-danger" onclick="removeAdmin('${user}')">REVOKE</button></td>
-            </tr>`;
-        });
+      }
     });
-}
+  }
 
-/* ─── C2 EXPORTED FUNCTIONS ─── */
-window.addAdmin = function() {
-    const userInput = document.getElementById('new-admin');
-    const user = userInput.value.trim();
-    if(!user) return;
-    
-    set(ref(db, `admin/global_whitelist/${user}`), true)
-        .then(() => { userInput.value = ''; })
-        .catch(err => alert("Failed to write to database: " + err.message));
-}
-
-window.removeAdmin = function(user) {
-    if(confirm(`Revoke admin access for ${user}?`)) {
-        remove(ref(db, `admin/global_whitelist/${user}`))
-            .catch(err => alert("Failed to remove user: " + err.message));
+  onValue(ref(db,'admin/global_whitelist'), snap => {
+    const data=snap.val()||{};
+    const tbody=document.getElementById('wl-body');
+    tbody.innerHTML="";
+    const entries=Object.entries(data).filter(([,v])=>v===true);
+    if(entries.length===0){
+      tbody.innerHTML='<tr><td colspan="3" style="color:var(--text-3);text-align:center;">No admins in database.</td></tr>';
+      return;
     }
+    entries.forEach(([user])=>{
+      tbody.innerHTML+=`<tr><td style="font-weight:600;color:var(--text);">${user}</td><td style="color:var(--text-3);">Full Administrator</td><td><button class="btn-revoke" onclick="removeAdmin('${user}')">Revoke</button></td></tr>`;
+    });
+  });
 }
 
-window.handleCommand = function(e) {
-    if(e.key === 'Enter') {
-        const input = e.target.value.trim();
-        e.target.value = "";
-        if(!input) return;
+window.addAdmin = function(){
+  const inp=document.getElementById('new-admin');
+  const user=inp.value.trim();
+  if(!user) return;
+  set(ref(db,`admin/global_whitelist/${user}`),true).then(()=>{ inp.value=''; }).catch(err=>alert("DB error: "+err.message));
+};
 
-        const termOut = document.getElementById('term-out');
-        termOut.innerHTML += `<div class="term-line"><span style="color:var(--l400);">[local@c2]~#</span> <span style="color:var(--text);">${input}</span></div>`;
-        
-        const parts = input.split(" ");
-        const cmd = parts[0].toLowerCase();
-        const target = parts[1] || "";
-        const args = parts.slice(2).join(" ");
+window.removeAdmin = function(user){
+  if(confirm(`Revoke access for ${user}?`))
+    remove(ref(db,`admin/global_whitelist/${user}`)).catch(err=>alert("DB error: "+err.message));
+};
 
-        const validCmds = ["kick", "kill", "freeze", "announce", "shutdown", "require"];
-        
-        if(!validCmds.includes(cmd)) {
-            termOut.innerHTML += `<div class="term-line" style="color:#ff4444;">Error: Unknown command payload.</div>`;
-        } else {
-            termOut.innerHTML += `<div class="term-line" style="color:var(--muted);">Compiling JSON payload...</div>`;
-            
-            const payload = {
-                command: cmd,
-                targetPlayer: target,
-                args: args,
-                adminName: currentUser,
-                licenseKey: currentKey,
-                targetServer: currentGame,
-                timestamp: Math.floor(Date.now() / 1000)
-            };
+window.handleCommand = function(e){
+  if(e.key!=='Enter') return;
+  const input=e.target.value.trim();
+  e.target.value='';
+  if(!input) return;
 
-            const queueTarget = currentGame === "GLOBAL" ? "GLOBAL_QUEUE" : currentGame;
+  const out=document.getElementById('term-out');
+  out.innerHTML+=`<div class="term-line"><span style="color:var(--text-3);">[c2@shell]</span> ${input}</div>`;
 
-            push(ref(db, `admin/queue/${queueTarget}`), payload)
-                .then(() => {
-                    termOut.innerHTML += `<div class="term-line" style="color:#00ffcc;">[SUCCESS] Payload injected into database stream.</div>`;
-                }).catch(err => {
-                    termOut.innerHTML += `<div class="term-line" style="color:#ff4444;">[FATAL] Transmission failed: ${err.message}</div>`;
-                });
-        }
-        termOut.scrollTop = termOut.scrollHeight;
-    }
-}
+  const parts=input.split(" "), cmd=parts[0].toLowerCase(), target=parts[1]||"", args=parts.slice(2).join(" ");
+  const valid=["kick","kill","freeze","announce","shutdown","require"];
+
+  if(!valid.includes(cmd)){
+    out.innerHTML+=`<div class="term-line" style="color:#ff5555;">Error: Unknown command.</div>`;
+  } else {
+    out.innerHTML+=`<div class="term-line" style="color:var(--text-3);">Compiling payload…</div>`;
+    const payload={ command:cmd, targetPlayer:target, args, adminName:currentUser, licenseKey:currentKey, targetServer:currentGame, timestamp:Math.floor(Date.now()/1000) };
+    const queueTarget=currentGame==="GLOBAL"?"GLOBAL_QUEUE":currentGame;
+    push(ref(db,`admin/queue/${queueTarget}`), payload)
+      .then(()=>{ out.innerHTML+=`<div class="term-line" style="color:rgba(255,255,255,0.6);">Payload injected successfully.</div>`; })
+      .catch(err=>{ out.innerHTML+=`<div class="term-line" style="color:#ff5555;">Transmission failed: ${err.message}</div>`; });
+  }
+  out.scrollTop=out.scrollHeight;
+};
 </script>
 </body>
 </html>
