@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Game Status</title>
+<title>AdminPlus C2 | Status</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -48,8 +48,16 @@ body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   opacity:.025;}
 
+/* ─── C2 AUTH MODAL ─── */
+#auth-modal { position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px); transition:opacity 0.5s ease; }
+.auth-box { background:var(--card); border:1px solid var(--bdr); padding:3rem; border-radius:16px; width:420px; text-align:center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+.auth-box input { width:100%; background:rgba(var(--rgb-main),0.03); border:1px solid var(--bdr); color:var(--text); padding:14px; margin:10px 0; border-radius:8px; font-family:'JetBrains Mono'; outline:none; transition:border 0.2s;}
+.auth-box input:focus { border-color:var(--l400); }
+.auth-btn { width:100%; background:var(--text); color:var(--bg); padding:14px; border:none; border-radius:8px; font-weight:800; font-family:'Orbitron'; cursor:pointer; margin-top:15px; transition: 0.2s; letter-spacing: 2px;}
+.auth-btn:hover { transform: translateY(-2px); box-shadow: 0 0 15px rgba(var(--rgb-main),0.3); }
+
 /* app */
-#app{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:0 2rem 6rem;}
+#app{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:0 2rem 6rem; display:none; animation:fi 1s ease both;}
 
 /* header */
 header{padding:3rem 0 2.5rem;display:flex;align-items:flex-end;
@@ -84,11 +92,19 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
   transition:all .2s;}
 #sndbtn:hover, #thmbtn:hover {color:var(--l300);border-color:var(--bdrh);background:rgba(var(--rgb-main),.07);}
 
+/* ─── C2 TABS NAVIGATION ─── */
+.tabs { display:flex; gap:10px; margin-top:2rem; margin-bottom: 2rem; flex-wrap:wrap; animation:sD .8s .1s var(--eo) both;}
+.tab-btn { background:var(--card); color:var(--muted); border:1px solid var(--bdr); padding:12px 24px; border-radius:8px; cursor:pointer; font-family:'JetBrains Mono'; font-size:12px; font-weight:600; text-transform:uppercase; transition: 0.3s var(--eo);}
+.tab-btn:hover { background:rgba(var(--rgb-main),0.05); color:var(--text); transform:translateY(-2px); }
+.tab-btn.active { background:rgba(var(--rgb-main),0.1); color:var(--text); border-color:var(--l400); box-shadow: 0 5px 15px rgba(var(--rgb-main),0.05); }
+.tab-content { display:none; animation: fi 0.4s ease; }
+.tab-content.active { display:block; }
+
 /* stats */
 #stats{display:grid;grid-template-columns:repeat(5,1fr);
   border:1px solid var(--bdr);border-radius:16px;overflow:hidden;
-  margin:2.5rem 0;background:var(--card);backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);animation:sD .8s .1s var(--eo) both;}
+  margin-bottom:2.5rem;background:var(--card);backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);}
 
 .st{padding:1.8rem 1.4rem;border-right:1px solid var(--bdr);position:relative;
   overflow:hidden;transition:background .3s;}
@@ -110,7 +126,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
 
 /* section head */
 .shead{display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:1.5rem;animation:fi .6s .2s var(--eo) both;}
+  margin-bottom:1.5rem;}
 .stitle{font-family:'JetBrains Mono',monospace;font-size:10px;
   letter-spacing:.25em;text-transform:uppercase;color:var(--muted);}
 #lupd{font-family:'JetBrains Mono',monospace;font-size:10px;
@@ -127,71 +143,28 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
   overflow:hidden;transition:background .35s var(--eo),transform .4s var(--eb),box-shadow .4s;
   animation:cR .6s var(--eo) both;}
 
-/* Card Background Image */
-.card-bg {
-  position:absolute; inset:0; z-index:0;
-  background-size:cover; background-position:center;
-  opacity:0.1; filter:grayscale(100%) blur(4px);
-  transition:all 0.5s var(--eo);
-}
-.game-card:hover .card-bg {
-  opacity:0.3; filter:grayscale(100%) blur(0px);
-  transform:scale(1.05);
-}
-
-.card-content {
-  position:relative; z-index:1;
-}
-
-.game-card:hover{background:var(--card2);
-  transform:scale(1.013) translateY(-3px);
-  box-shadow:0 0 0 1px rgba(var(--rgb-main),.18),0 14px 44px rgba(var(--rgb-main),.08);z-index:3;}
-
+.card-bg { position:absolute; inset:0; z-index:0; background-size:cover; background-position:center; opacity:0.1; filter:grayscale(100%) blur(4px); transition:all 0.5s var(--eo); }
+.game-card:hover .card-bg { opacity:0.3; filter:grayscale(100%) blur(0px); transform:scale(1.05); }
+.card-content { position:relative; z-index:1; }
+.game-card:hover{background:var(--card2); transform:scale(1.013) translateY(-3px); box-shadow:0 0 0 1px rgba(var(--rgb-main),.18),0 14px 44px rgba(var(--rgb-main),.08);z-index:3;}
 .game-card.top-game{background:rgba(var(--rgb-main),.03);}
 
-.cidx{font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:.14em;color:rgba(var(--rgb-main),.3);
-  margin-bottom:1.1rem;display:flex;align-items:center;justify-content:space-between;}
-
-.spill{display:inline-flex;align-items:center;gap:6px;
-  font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;
-  letter-spacing:.18em;text-transform:uppercase;
-  padding:4px 12px;border-radius:999px;transition:all .3s;}
-.spill.live{background:rgba(var(--rgb-main),.1);color:var(--text);
-  border:1px solid rgba(var(--rgb-main),.25);}
-.spill.off{background:rgba(var(--rgb-main),.05);color:rgba(var(--rgb-main),.35);
-  border:1px solid rgba(var(--rgb-main),.09);}
-.spill.top{background:transparent;color:var(--text);
-  border:1px solid rgba(var(--rgb-main),.4);}
+.cidx{font-family:'JetBrains Mono',monospace;font-size:10px; letter-spacing:.14em;color:rgba(var(--rgb-main),.3); margin-bottom:1.1rem;display:flex;align-items:center;justify-content:space-between;}
+.spill{display:inline-flex;align-items:center;gap:6px; font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500; letter-spacing:.18em;text-transform:uppercase; padding:4px 12px;border-radius:999px;transition:all .3s;}
+.spill.live{background:rgba(var(--rgb-main),.1);color:var(--text); border:1px solid rgba(var(--rgb-main),.25);}
+.spill.off{background:rgba(var(--rgb-main),.05);color:rgba(var(--rgb-main),.35); border:1px solid rgba(var(--rgb-main),.09);}
+.spill.top{background:transparent;color:var(--text); border:1px solid rgba(var(--rgb-main),.4);}
 .pdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
 .live .pdot{background:var(--text);animation:lp 2s ease-in-out infinite;}
 .off .pdot{background:rgba(var(--rgb-main),.18);}
 
-/* Title & Rewind Icon */
-.gname-wrapper {
-  display: flex; align-items: center; gap: 8px; margin: 1rem 0 0;
-}
-.gname{font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:700;
-  letter-spacing:-.01em;color:var(--l100);
-  line-height:1.2;transition:color .3s,text-shadow .3s;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.gname-wrapper { display: flex; align-items: center; gap: 8px; margin: 1rem 0 0; }
+.gname{font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:700; letter-spacing:-.01em;color:var(--l100); line-height:1.2;transition:color .3s,text-shadow .3s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .game-card:hover .gname{color:var(--l50);text-shadow:0 0 22px rgba(var(--rgb-main),.5);}
 
-.rewind-icon {
-  color: var(--l400); cursor: help; position: relative; transition: color 0.3s; display:flex; align-items:center;
-}
+.rewind-icon { color: var(--l400); cursor: help; position: relative; transition: color 0.3s; display:flex; align-items:center; }
 .rewind-icon:hover { color: var(--text); }
-.rewind-icon::after {
-  content: attr(data-tooltip);
-  position: absolute; bottom: 150%; left: 50%; transform: translateX(-50%);
-  background: var(--card2); border: 1px solid var(--bdr);
-  padding: 6px 10px; border-radius: 6px;
-  font-family: 'JetBrains Mono', monospace; font-size: 9px;
-  color: var(--text); white-space: nowrap;
-  opacity: 0; visibility: hidden; transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(var(--rgb-main), 0.1);
-  z-index: 10; pointer-events: none;
-}
+.rewind-icon::after { content: attr(data-tooltip); position: absolute; bottom: 150%; left: 50%; transform: translateX(-50%); background: var(--card2); border: 1px solid var(--bdr); padding: 6px 10px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text); white-space: nowrap; opacity: 0; visibility: hidden; transition: all 0.2s; box-shadow: 0 4px 12px rgba(var(--rgb-main), 0.1); z-index: 10; pointer-events: none; }
 .rewind-icon:hover::after { opacity: 1; visibility: visible; bottom: 120%; }
 
 .gid {font-family:'JetBrains Mono',monospace;font-size:9px; color:var(--l400); margin-top:4px; margin-bottom:1.2rem; letter-spacing:0.05em;}
@@ -200,37 +173,20 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
 /* players */
 .psec{margin:1.2rem 0 1.5rem;}
 .phdr{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:.6rem;}
-.plbl{font-family:'JetBrains Mono',monospace;font-size:9px;
-  letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
-.pnum{font-family:'Orbitron',monospace;font-size:1.55rem;font-weight:700;
-  color:var(--l300);letter-spacing:-.03em;
-  text-shadow:0 0 20px rgba(var(--rgb-main),.3);transition:all .3s;}
+.plbl{font-family:'JetBrains Mono',monospace;font-size:9px; letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
+.pnum{font-family:'Orbitron',monospace;font-size:1.55rem;font-weight:700; color:var(--l300);letter-spacing:-.03em; text-shadow:0 0 20px rgba(var(--rgb-main),.3);transition:all .3s;}
 .game-card:hover .pnum{color:var(--l200);text-shadow:0 0 30px rgba(var(--rgb-main),.55);}
-.srv-badge { font-size:8px; background:rgba(var(--rgb-main),0.1); padding:2px 6px; border-radius:4px; margin-left:6px; vertical-align:middle; }
+.srv-badge { font-size:8px; background:rgba(var(--rgb-main),0.1); padding:2px 6px; border-radius:4px; margin-left:6px; vertical-align:middle; border:1px solid var(--bdr); }
 
 .pbtrack{height:3px;background:rgba(var(--rgb-main),.09);border-radius:3px;overflow:hidden;}
-.pbfill{height:100%;border-radius:3px;width:0%;
-  background:linear-gradient(90deg,var(--l700),var(--l400),var(--l200));
-  transition:width 1.1s var(--eo);position:relative;overflow:hidden;}
-.pbfill::after{content:'';position:absolute;top:0;right:0;bottom:0;width:35px;
-  background:linear-gradient(90deg,transparent,rgba(var(--rgb-main),.35));
-  animation:shim 2.8s ease-in-out infinite;}
+.pbfill{height:100%;border-radius:3px;width:0%; background:linear-gradient(90deg,var(--l700),var(--l400),var(--l200)); transition:width 1.1s var(--eo);position:relative;overflow:hidden;}
+.pbfill::after{content:'';position:absolute;top:0;right:0;bottom:0;width:35px; background:linear-gradient(90deg,transparent,rgba(var(--rgb-main),.35)); animation:shim 2.8s ease-in-out infinite;}
 @keyframes shim{0%,100%{opacity:0;}50%{opacity:1;}}
 
 /* play btn */
-.playbtn{display:inline-flex;align-items:center;gap:10px;text-decoration:none;
-  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;
-  letter-spacing:.15em;text-transform:uppercase;color:var(--l300);
-  border:1px solid rgba(var(--rgb-main),.18);padding:11px 20px;border-radius:8px;
-  position:relative;overflow:hidden;
-  transition:color .3s,border-color .3s,box-shadow .3s;
-  background:rgba(var(--rgb-main),.05);width:100%;justify-content:center;}
-.playbtn::before{content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,var(--l700),var(--l500));
-  transform:scaleX(0);transform-origin:left;
-  transition:transform .36s var(--eo);z-index:0;}
-.playbtn:hover{color:var(--l50);border-color:var(--l500);
-  box-shadow:0 0 22px rgba(var(--rgb-main),.15),0 0 44px rgba(var(--rgb-main),.05);}
+.playbtn{display:inline-flex;align-items:center;gap:10px;text-decoration:none; font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500; letter-spacing:.15em;text-transform:uppercase;color:var(--l300); border:1px solid rgba(var(--rgb-main),.18);padding:11px 20px;border-radius:8px; position:relative;overflow:hidden; transition:color .3s,border-color .3s,box-shadow .3s; background:rgba(var(--rgb-main),.05);width:100%;justify-content:center;}
+.playbtn::before{content:'';position:absolute;inset:0; background:linear-gradient(135deg,var(--l700),var(--l500)); transform:scaleX(0);transform-origin:left; transition:transform .36s var(--eo);z-index:0;}
+.playbtn:hover{color:var(--l50);border-color:var(--l500); box-shadow:0 0 22px rgba(var(--rgb-main),.15),0 0 44px rgba(var(--rgb-main),.05);}
 .playbtn:hover::before{transform:scaleX(1);}
 .playbtn span,.playbtn svg{position:relative;z-index:1;}
 .playbtn svg{width:14px;height:14px;transition:transform .3s var(--eo);}
@@ -239,10 +195,35 @@ h1{font-family:'Orbitron',sans-serif;font-size:clamp(2rem,5vw,4rem);
 .game-card.is-off .gname, .game-card.is-off .gid {color:rgba(var(--rgb-main),.35);}
 .game-card.is-off .pnum{color:rgba(var(--rgb-main),.22);}
 .game-card.is-off .playbtn{opacity:.45;}
+.errmsg{grid-column:1/-1;padding:3rem;text-align:center; font-family:'JetBrains Mono',monospace;font-size:11px; letter-spacing:.15em;text-transform:uppercase;color:rgba(var(--rgb-main),.2);}
 
-.errmsg{grid-column:1/-1;padding:3rem;text-align:center;
-  font-family:'JetBrains Mono',monospace;font-size:11px;
-  letter-spacing:.15em;text-transform:uppercase;color:rgba(var(--rgb-main),.2);}
+
+/* ─── C2 PANELS CSS (Terminal & Tables) ─── */
+.panel-card { background:var(--card); border:1px solid var(--bdr); border-radius:16px; padding:2rem; backdrop-filter:blur(20px); }
+.panel-card h2 { font-family:'Orbitron'; font-size:1.8rem; margin-bottom:10px; }
+.panel-card p { font-family:'JetBrains Mono'; font-size:12px; color:var(--muted); margin-bottom:20px; }
+
+.terminal { background:rgba(0,0,0,0.4); border:1px solid var(--bdr); border-radius:8px; padding:1.5rem; font-family:'JetBrains Mono'; color:#00ffcc; height:400px; overflow-y:auto; box-shadow: inset 0 0 20px rgba(0,0,0,0.5);}
+.term-line { margin-bottom:8px; font-size:13px; text-shadow: 0 0 5px rgba(0,255,204,0.3);}
+.term-input-wrapper { display:flex; gap:10px; margin-top:15px; background:rgba(var(--rgb-main),0.03); border:1px solid var(--bdr); padding:14px; border-radius:8px;}
+.term-input { flex:1; background:transparent; border:none; color:#00ffcc; font-family:'JetBrains Mono'; font-size:16px; outline:none; }
+
+.action-input { flex:1; background:rgba(var(--rgb-main),0.03); border:1px solid var(--bdr); color:var(--text); padding:14px; border-radius:8px; font-family:'JetBrains Mono'; outline:none; }
+.action-input:focus { border-color:var(--l400); }
+.action-btn { background:var(--l200); color:var(--bg); padding:14px 24px; border:none; border-radius:8px; font-weight:800; cursor:pointer; font-family:'Orbitron'; transition: 0.2s;}
+.action-btn:hover { background:var(--text); transform:scale(1.02); }
+.btn-danger { background:#ff4444; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-family:'JetBrains Mono'; font-size:11px; font-weight:bold; transition: 0.2s;}
+.btn-danger:hover { background:#ff2222; transform:scale(1.05); }
+
+table { width:100%; border-collapse:collapse; font-family:'JetBrains Mono'; font-size:12px; border-radius:8px; overflow:hidden;}
+th, td { padding:16px; text-align:left; border-bottom:1px solid var(--bdr); }
+th { background:rgba(var(--rgb-main),0.05); color:var(--l300); font-weight:bold; letter-spacing:1px;}
+tr:hover td { background:rgba(var(--rgb-main),0.02); }
+
+.cmd-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:15px;}
+.cmd-box { background:rgba(var(--rgb-main),0.03); border:1px solid var(--bdr); padding:20px; border-radius:8px; font-family:'JetBrains Mono'; transition:0.2s; border-left: 3px solid var(--l400);}
+.cmd-box:hover { transform: translateY(-3px); border-left-color: var(--l100); background:rgba(var(--rgb-main),0.06);}
+.cmd-box span { display:block; color:var(--muted); font-size:11px; margin-top:8px;}
 
 /* footer */
 footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--bdr);
@@ -250,7 +231,6 @@ footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--bdr);
   animation:fi .6s .35s var(--eo) both;}
 .fl{font-family:'JetBrains Mono',monospace;font-size:10px;
   letter-spacing:.1em;color:rgba(var(--rgb-main),.25);}
-.fr{display:flex;align-items:center;gap:14px;}
 
 /* anims */
 @keyframes sD{from{opacity:0;transform:translateY(-16px);}to{opacity:1;transform:translateY(0);}}
@@ -269,61 +249,203 @@ footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--bdr);
 
 <canvas id="bgc"></canvas>
 
+<!-- AUTHENTICATION -->
+<div id="auth-modal">
+    <div class="auth-box">
+        <h1 style="font-size:2.5rem; margin-bottom:5px;">AdminPlus</h1>
+        <p style="color:var(--muted); margin-bottom:30px; font-family:'JetBrains Mono'; font-size:12px; letter-spacing:1px;">C2 SECURE LOGIN</p>
+        <input type="text" id="auth-user" placeholder="Roblox Username (e.g. DIMAZ)" autocomplete="off" />
+        <input type="password" id="auth-key" placeholder="License Key" autocomplete="off" />
+        <input type="text" id="auth-game" placeholder="Target Game ID (Optional if Global)" value="130877407176672" autocomplete="off" />
+        <button class="auth-btn" onclick="login()">INITIALIZE UPLINK</button>
+    </div>
+</div>
+
 <div id="app">
 
   <header>
     <div class="hl">
-      <h1>Game Status</h1>
-      <div class="htag">live server monitoring · firebase rtdb</div>
+      <h1>C2 Dashboard</h1>
+      <div class="htag" id="conn-info">Awaiting Authorization...</div>
     </div>
     <div class="hr">
       <div id="clk">00:00:00</div>
       <div class="hbadges">
-        <div class="lbadge"><span class="ldot"></span>REALTIME CONNECTION</div>
+        <div class="lbadge"><span class="ldot"></span>SECURE STREAM</div>
         <button id="sndbtn" onclick="toggleSnd()">SFX ON</button>
         <button id="thmbtn" onclick="toggleTheme()">THEME</button>
       </div>
     </div>
   </header>
 
-  <div id="stats">
-    <div class="st"><div class="stl">Total Games</div><div class="stv" id="sv-total">—</div></div>
-    <div class="st"><div class="stl">Online</div><div class="stv g" id="sv-online">—</div></div>
-    <div class="st"><div class="stl">Offline</div><div class="stv d" id="sv-offline">—</div></div>
-    <div class="st">
-      <div class="stl">Total Players</div>
-      <div class="stv" id="sv-players">—</div>
-      <div class="stsub" id="sv-psub"></div>
-    </div>
-    <div class="st">
-      <div class="stl">Most Popular Game</div>
-      <div class="stv" id="sv-peak" style="font-size:1.35rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">—</div>
-      <div class="stsub" id="sv-peakn"></div>
-    </div>
+  <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('tab-games')">Active Servers</button>
+      <button class="tab-btn" onclick="switchTab('tab-exec')">Terminal Executor</button>
+      <button class="tab-btn" onclick="switchTab('tab-whitelist')">Cloud Whitelist</button>
+      <button class="tab-btn" onclick="switchTab('tab-logs')">Action Logs</button>
+      <button class="tab-btn" onclick="switchTab('tab-cmd')">Command List</button>
+      <button class="tab-btn" onclick="switchTab('tab-scripts')">Installer Script</button>
   </div>
 
-  <div class="shead">
-    <div class="stitle">Active Servers</div>
-    <div id="lupd">Waiting for data...</div>
+  <!-- LIVE SERVERS TAB (Your original view) -->
+  <div id="tab-games" class="tab-content active">
+      <div id="stats">
+        <div class="st"><div class="stl">Total Games</div><div class="stv" id="sv-total">—</div></div>
+        <div class="st"><div class="stl">Online</div><div class="stv g" id="sv-online">—</div></div>
+        <div class="st"><div class="stl">Offline</div><div class="stv d" id="sv-offline">—</div></div>
+        <div class="st">
+          <div class="stl">Total Players</div>
+          <div class="stv" id="sv-players">—</div>
+          <div class="stsub" id="sv-psub"></div>
+        </div>
+        <div class="st">
+          <div class="stl">Most Popular Game</div>
+          <div class="stv" id="sv-peak" style="font-size:1.35rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">—</div>
+          <div class="stsub" id="sv-peakn"></div>
+        </div>
+      </div>
+
+      <div class="shead">
+        <div class="stitle">Active Servers</div>
+        <div id="lupd">Waiting for data...</div>
+      </div>
+
+      <div id="games"></div>
   </div>
 
-  <div id="games"></div>
+  <!-- TERMINAL EXECUTOR TAB -->
+  <div id="tab-exec" class="tab-content">
+      <div class="panel-card">
+          <h2>Terminal Executor</h2>
+          <p>Inject commands directly into the active Firebase stream.</p>
+          <div class="terminal" id="term-out">
+              <div class="term-line">AdminPlus SECURE SHELL v1.0.0</div>
+              <div class="term-line">Connected. Type a command to execute across active instances.</div>
+          </div>
+          <div class="term-input-wrapper">
+              <span style="color:#00ffcc; font-family:'JetBrains Mono'; font-size:16px;">></span>
+              <input type="text" class="term-input" id="term-in" placeholder="e.g., kick Player1 exploiting" onkeypress="handleCommand(event)" autocomplete="off"/>
+          </div>
+      </div>
+  </div>
+
+  <!-- WHITELIST TAB -->
+  <div id="tab-whitelist" class="tab-content">
+      <div class="panel-card">
+          <h2>Cloud Access Control</h2>
+          <p>Users added here instantly receive admin UI and execution rights in any game running the script.</p>
+          
+          <div style="display:flex; gap:10px; margin-bottom:30px;">
+              <input type="text" id="new-admin" class="action-input" placeholder="Enter exact Roblox Username" autocomplete="off">
+              <button class="action-btn" onclick="addAdmin()">GRANT ACCESS</button>
+          </div>
+
+          <div style="border:1px solid var(--bdr); border-radius:8px; overflow:hidden;">
+              <table>
+                  <thead><tr><th>ROBLOX USERNAME</th><th>ACCESS LEVEL</th><th>ACTION</th></tr></thead>
+                  <tbody id="wl-body">
+                      <tr><td colspan="3" style="color:var(--muted); text-align:center;">Loading cloud whitelist...</td></tr>
+                  </tbody>
+              </table>
+          </div>
+      </div>
+  </div>
+
+  <!-- LOGS TAB -->
+  <div id="tab-logs" class="tab-content">
+      <div class="panel-card">
+          <h2>Action Logs</h2>
+          <p>Real-time audit log of all commands executed through this panel.</p>
+          <div style="border:1px solid var(--bdr); border-radius:8px; overflow:hidden;">
+              <table>
+                  <thead><tr><th>TIME</th><th>ADMIN</th><th>COMMAND</th><th>TARGET</th><th>STATUS</th></tr></thead>
+                  <tbody id="log-body">
+                      <tr><td colspan="5" style="color:var(--muted); text-align:center;">Listening for executed payloads...</td></tr>
+                  </tbody>
+              </table>
+          </div>
+      </div>
+  </div>
+
+  <!-- COMMANDS LIST TAB -->
+  <div id="tab-cmd" class="tab-content">
+      <div class="panel-card">
+          <h2>Command List</h2>
+          <p>Available commands for the Terminal Executor.</p>
+          <div class="cmd-list">
+              <div class="cmd-box">kick [user] [reason]<span>Disconnects player from server</span></div>
+              <div class="cmd-box">kill [user]<span>Sets humanoid health to 0</span></div>
+              <div class="cmd-box">freeze [user]<span>Anchors root part</span></div>
+              <div class="cmd-box">announce [message]<span>Displays global broadcast</span></div>
+              <div class="cmd-box">shutdown<span>Closes server instance safely</span></div>
+              <div class="cmd-box">require [asset_id]<span>Executes external ModuleScript</span></div>
+          </div>
+      </div>
+  </div>
+
+  <!-- SCRIPT INSTALLER TAB -->
+  <div id="tab-scripts" class="tab-content">
+      <div class="panel-card">
+          <h2>Plug-and-Play Installer</h2>
+          <p>Give this code to your customers. It auto-registers their game to this dashboard.</p>
+          <textarea readonly style="width:100%; height:350px; background:rgba(0,0,0,0.5); border:1px solid var(--bdr); color:#00ffcc; padding:1.5rem; border-radius:8px; font-family:'JetBrains Mono'; font-size:11px; outline:none; resize:vertical; line-height:1.5;">
+-- ==========================================
+-- ADMINPLUS: AUTO-INSTALLER
+-- ==========================================
+-- 1. Create a Script in ServerScriptService.
+-- 2. Paste the final Master Script provided by Gemini here.
+-- 3. The script will automatically pull from your Firebase whitelist and report server status.
+          </textarea>
+      </div>
+  </div>
 
   <footer>
-    <div class="fl">Firebase RTDB · tryloser-com · WebSockets Active</div>
+    <div class="fl">AdminPlus C2 Engine · WebSockets Active</div>
   </footer>
 
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, onValue, push, set, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const app = initializeApp({ databaseURL: "https://tryloser-com-default-rtdb.firebaseio.com/" });
 const db = getDatabase(app);
 const gamesRef = ref(db, "games");
 
+let currentUser = "";
+let currentKey = "";
+let currentGame = "";
+
+/* ─── GLOBAL WINDOW EXPORTS ─── */
+window.login = function() {
+    currentUser = document.getElementById('auth-user').value.trim();
+    currentKey = document.getElementById('auth-key').value.trim();
+    currentGame = document.getElementById('auth-game').value.trim() || "GLOBAL";
+    
+    if(!currentUser || !currentKey) return alert("Fill required authentication fields.");
+    
+    document.getElementById('auth-modal').style.opacity = '0';
+    setTimeout(() => {
+        document.getElementById('auth-modal').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        if(!muted) SFX.online();
+    }, 500);
+
+    document.getElementById('conn-info').innerText = `LICENSED TO: ${currentUser} | TARGET: ${currentGame}`;
+    initFirebaseC2();
+}
+
+window.switchTab = function(tabId) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    event.target.classList.add('active');
+    if(!muted) SFX.click();
+}
+
 /* ─── THEME TOGGLE ─── */
+let muted=false;
 function toggleTheme(){
   document.body.classList.toggle('light');
   if(!muted) SFX.click();
@@ -384,7 +506,7 @@ window.toggleTheme = toggleTheme;
 })();
 
 /* ─── WEB AUDIO SFX ─── */
-let AC=null,muted=false;
+let AC=null;
 function ac(){if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();return AC;}
 function tone(f,t,d,v,delay=0){
   if(muted)return;
@@ -448,7 +570,6 @@ function buildCard(data, idx, isTop){
   const barPct = maxP > 0 ? Math.round((players / maxP) * 100) : 0;
   const pad = String(idx + 1).padStart(2, '0');
   
-  // Past Names Setup
   const pastNames = game.pastNames || [];
   const hasPastNames = pastNames.length > 0;
   const pastNamesStr = hasPastNames ? pastNames.join(', ').replace(/"/g, '&quot;') : '';
@@ -498,11 +619,11 @@ function buildCard(data, idx, isTop){
   return card;
 }
 
-/* ─── REALTIME IN-PLACE DOM UPDATER ─── */
+/* ─── REALTIME IN-PLACE DOM UPDATER (Live Servers) ─── */
 let currentData = {};
 let firstLoad = true, prevSt = {};
 
-function render() {
+function renderGames() {
   const gContainer = document.getElementById('games');
   
   if(!currentData || Object.keys(currentData).length === 0){
@@ -514,7 +635,6 @@ function render() {
       if(gContainer.querySelector('.errmsg')) { gContainer.innerHTML = ''; }
   }
 
-  // Strictly filter out any Banned/Deleted games
   const entries = Object.entries(currentData).filter(([,v]) => {
       return v && !v.isBanned && !String(v.name).includes("Content Deleted");
   });
@@ -522,7 +642,6 @@ function render() {
   let online=0, totalP=0, totalServers=0;
   maxP=1;
 
-  // Process and Aggregate Multiple Servers safely
   const processed = entries.map(([id, gameData]) => {
     let onlinePlayers = 0;
     let serverCount = 0;
@@ -545,15 +664,7 @@ function render() {
       if(onlinePlayers > maxP) maxP = onlinePlayers;
     }
 
-    return {
-      id,
-      isOnline,
-      game: {
-        ...gameData,
-        players: onlinePlayers,
-        serverCount: serverCount
-      }
-    };
+    return { id, isOnline, game: { ...gameData, players: onlinePlayers, serverCount: serverCount } };
   });
 
   const total = processed.length;
@@ -588,7 +699,6 @@ function render() {
       gContainer.appendChild(card);
       requestAnimationFrame(()=>requestAnimationFrame(()=>{ card.querySelector('.pbfill').style.width = barPct + '%'; }));
     } else {
-      // IN-PLACE UPDATE (No Flickering)
       const pnum = card.querySelector('.pnum');
       const serversHTML = data.game.serverCount > 0 ? `<span class="srv-badge">${data.game.serverCount} SVRS</span>` : '';
       const newPlayersHTML = `${data.game.players.toLocaleString()}${serversHTML}`;
@@ -607,22 +717,6 @@ function render() {
       if (gnameEl.textContent !== data.game.name) {
           gnameEl.textContent = data.game.name;
           gnameEl.title = data.game.name;
-      }
-
-      const pastNames = data.game.pastNames || [];
-      const hasPastNames = pastNames.length > 0;
-      let rewindEl = gnameWrapper.querySelector('.rewind-icon');
-      
-      if (hasPastNames) {
-          const pastNamesStr = pastNames.join(', ').replace(/"/g, '&quot;');
-          if (!rewindEl) {
-              const rHtml = `<div class="rewind-icon" data-tooltip="Past names: ${pastNamesStr}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></div>`;
-              gnameWrapper.insertAdjacentHTML('beforeend', rHtml);
-          } else {
-              rewindEl.setAttribute('data-tooltip', `Past names: ${pastNamesStr}`);
-          }
-      } else if (rewindEl) {
-          rewindEl.remove();
       }
 
       if (data.isOnline) { card.classList.remove('is-off'); } 
@@ -651,13 +745,12 @@ function render() {
     }
 
     const currState = data.isOnline ? 'running' : 'offline';
-    if(prevSt[data.id] && prevSt[data.id] !== currState) {
+    if(prevSt[data.id] && prevSt[data.id] !== currState && !firstLoad) {
         currState === 'running' ? SFX.online() : SFX.offline();
     }
     prevSt[data.id] = currState;
   });
 
-  // Remove banned or deleted games from UI immediately
   Array.from(gContainer.children).forEach(child => {
      if (!seenIds.has(child.dataset.id)) { child.remove(); }
   });
@@ -665,10 +758,122 @@ function render() {
   if(firstLoad){ SFX.load(); firstLoad=false; }
 }
 
-// Event-driven Websockets
-onValue(gamesRef, snap => { currentData = snap.val() || {}; render(); });
-setInterval(render, 1000); // 1-second failsafe check for crashes
+/* ─── C2 FIREBASE INITS (Logs, Terminal, Whitelist) ─── */
+function initFirebaseC2() {
+    // 1. Keep the original Live Games updater running
+    onValue(gamesRef, snap => { currentData = snap.val() || {}; renderGames(); });
+    setInterval(renderGames, 1000);
 
+    // 2. Action Logs Monitoring
+    if (currentGame !== "GLOBAL") {
+        onValue(ref(db, `admin/logs/${currentGame}`), snap => {
+            const data = snap.val() || {};
+            const tbody = document.getElementById('log-body');
+            tbody.innerHTML = "";
+            
+            const logs = Object.values(data).sort((a,b)=>b.time - a.time).slice(0, 50);
+            if(logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted); text-align:center;">No recent actions logged.</td></tr>';
+            } else {
+                logs.forEach(log => {
+                    const date = new Date(log.time * 1000).toLocaleTimeString();
+                    const color = log.status.includes("SUCCESS") ? "#00ffcc" : "#ff4444";
+                    tbody.innerHTML += `<tr>
+                        <td>${date}</td>
+                        <td style="color:var(--text); font-weight:bold;">${log.admin}</td>
+                        <td style="color:var(--l400);">${log.cmd}</td>
+                        <td>${log.tgt}</td>
+                        <td style="color:${color};">${log.status}</td>
+                    </tr>`;
+                });
+            }
+        });
+    }
+
+    // 3. Global Whitelist Monitoring
+    onValue(ref(db, `admin/global_whitelist`), snap => {
+        const data = snap.val() || {};
+        const tbody = document.getElementById('wl-body');
+        tbody.innerHTML = "";
+        
+        const entries = Object.entries(data).filter(([user, status]) => status === true);
+        
+        if (entries.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="color:var(--muted); text-align:center;">No admins in the database.</td></tr>';
+            return;
+        }
+
+        entries.forEach(([user, status]) => {
+            tbody.innerHTML += `<tr>
+                <td style="font-weight:bold; color:var(--text);">${user}</td>
+                <td style="color:var(--l400);">Full Administrator</td>
+                <td><button class="btn-danger" onclick="removeAdmin('${user}')">REVOKE</button></td>
+            </tr>`;
+        });
+    });
+}
+
+/* ─── C2 EXPORTED FUNCTIONS ─── */
+window.addAdmin = function() {
+    const userInput = document.getElementById('new-admin');
+    const user = userInput.value.trim();
+    if(!user) return;
+    
+    set(ref(db, `admin/global_whitelist/${user}`), true)
+        .then(() => { userInput.value = ''; })
+        .catch(err => alert("Failed to write to database: " + err.message));
+}
+
+window.removeAdmin = function(user) {
+    if(confirm(`Revoke admin access for ${user}?`)) {
+        remove(ref(db, `admin/global_whitelist/${user}`))
+            .catch(err => alert("Failed to remove user: " + err.message));
+    }
+}
+
+window.handleCommand = function(e) {
+    if(e.key === 'Enter') {
+        const input = e.target.value.trim();
+        e.target.value = "";
+        if(!input) return;
+
+        const termOut = document.getElementById('term-out');
+        termOut.innerHTML += `<div class="term-line"><span style="color:var(--l400);">[local@c2]~#</span> <span style="color:var(--text);">${input}</span></div>`;
+        
+        const parts = input.split(" ");
+        const cmd = parts[0].toLowerCase();
+        const target = parts[1] || "";
+        const args = parts.slice(2).join(" ");
+
+        const validCmds = ["kick", "kill", "freeze", "announce", "shutdown", "require"];
+        
+        if(!validCmds.includes(cmd)) {
+            termOut.innerHTML += `<div class="term-line" style="color:#ff4444;">Error: Unknown command payload.</div>`;
+        } else {
+            termOut.innerHTML += `<div class="term-line" style="color:var(--muted);">Compiling JSON payload...</div>`;
+            
+            const payload = {
+                command: cmd,
+                targetPlayer: target,
+                args: args,
+                adminName: currentUser,
+                licenseKey: currentKey,
+                targetServer: currentGame,
+                timestamp: Math.floor(Date.now() / 1000)
+            };
+
+            const queueTarget = currentGame === "GLOBAL" ? "GLOBAL_QUEUE" : currentGame;
+
+            push(ref(db, `admin/queue/${queueTarget}`), payload)
+                .then(() => {
+                    termOut.innerHTML += `<div class="term-line" style="color:#00ffcc;">[SUCCESS] Payload injected into database stream.</div>`;
+                }).catch(err => {
+                    termOut.innerHTML += `<div class="term-line" style="color:#ff4444;">[FATAL] Transmission failed: ${err.message}</div>`;
+                });
+        }
+        termOut.scrollTop = termOut.scrollHeight;
+    }
+}
 </script>
 </body>
 </html>
