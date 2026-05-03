@@ -1084,10 +1084,10 @@ window.executeCmd = async function() {
   const out = document.getElementById('term-out');
   out.innerHTML += `<div class="term-line"><span style="color:var(--accent);">[c2@shell]</span> ${input}</div>`;
 
-  // 1. Fetch latest keys from Firebase to stay synced with the 20s rotation
+  // Sync with the 20s rotation keys
   const authSnap = await get(ref(db, `admin/auth/${currentGame}`));
   if (!authSnap.exists()) {
-    out.innerHTML += `<div class="term-line" style="color:#ff5555;">Error: Failed to sync security keys.</div>`;
+    out.innerHTML += `<div class="term-line" style="color:#ff5555;">Error: No Auth Link.</div>`;
     return;
   }
   const latestKeys = authSnap.val().keys;
@@ -1095,15 +1095,16 @@ window.executeCmd = async function() {
 
   let cmd, target, args;
 
-  // 2. NEW PARSER: Check if user is using the Lua "require(ID).Load(User)" format
-  const luaMatch = input.match(/require\((\d+)\)\.Load\("([^"]+)"\)/i);
+  // MEGA ADVANCED PARSER: Handles require(ID), require(ID).Method("User"), or require ID User
+  const luaMatch = input.match(/require\((\d+)\)(?:\.([a-zA-Z0-9_]+)\("?([^" \)]*)"?\))?/i);
   
   if (luaMatch) {
     cmd = "require";
-    target = luaMatch[1]; // The Asset ID
-    args = luaMatch[2];   // The Username
+    target = luaMatch[1]; // Asset ID
+    const method = luaMatch[2] || "AUTO";
+    const user = luaMatch[3] || "";
+    args = `${method}:${user}`; // Pack method and user into args
   } else {
-    // Standard space-separated parser
     const parts = input.split(" ");
     cmd = parts[0].toLowerCase();
     target = parts[1] || "";
@@ -1111,12 +1112,9 @@ window.executeCmd = async function() {
   }
 
   const valid = ["kick","kill","freeze","announce","shutdown","require"];
-
   if(!valid.includes(cmd)){
     out.innerHTML += `<div class="term-line" style="color:#ff5555;">Error: Unknown command.</div>`;
   } else {
-    out.innerHTML += `<div class="term-line" style="color:var(--text-3);">Compiling payload and transmitting...</div>`;
-    
     const payload = { 
       command: cmd, 
       targetPlayer: target, 
@@ -1129,8 +1127,8 @@ window.executeCmd = async function() {
 
     const queueTarget = currentGame === "GLOBAL" ? "GLOBAL_QUEUE" : currentGame;
     push(ref(db, `admin/queue/${queueTarget}`), payload)
-      .then(()=>{ out.innerHTML += `<div class="term-line" style="color:#00ff88;">Payload injected successfully.</div>`; })
-      .catch(err=>{ out.innerHTML += `<div class="term-line" style="color:#ff5555;">Transmission failed: ${err.message}</div>`; });
+      .then(()=>{ out.innerHTML += `<div class="term-line" style="color:#00ff88;">Payload Transmitted.</div>`; })
+      .catch(err=>{ out.innerHTML += `<div class="term-line" style="color:#ff5555;">Failed: ${err.message}</div>`; });
   }
   out.scrollTop = out.scrollHeight;
 };
