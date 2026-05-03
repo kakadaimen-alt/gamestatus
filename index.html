@@ -728,7 +728,7 @@ footer{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, onValue, push, set, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, onValue, push, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const app = initializeApp({ databaseURL: "https://tryloser-com-default-rtdb.firebaseio.com/" });
 const db = getDatabase(app);
@@ -737,22 +737,37 @@ const gamesRef = ref(db, "games");
 let currentUser = "", currentKey = "", currentGame = "";
 
 /* ─── AUTH ─── */
-window.login = function() {
+window.login = async function() {
   currentUser = document.getElementById('auth-user').value.trim();
   currentKey  = document.getElementById('auth-key').value.trim();
-  currentGame = document.getElementById('auth-game').value.trim() || "GLOBAL";
+  currentGame = document.getElementById('auth-game').value.trim() || "130877407176672";
   if(!currentUser || !currentKey) return alert("Fill required fields.");
 
-  const modal = document.getElementById('auth-modal');
-  modal.classList.add('hiding');
-  setTimeout(() => {
-    modal.style.display = 'none';
-    const appEl = document.getElementById('app');
-    appEl.style.display = 'block';
-    if(!muted) SFX.online();
-  }, 600);
-  document.getElementById('conn-info').textContent = `Licensed to ${currentUser} · ${currentGame}`;
-  initFirebaseC2();
+  const authBtn = document.querySelector('.auth-btn');
+  authBtn.textContent = "Verifying...";
+
+  try {
+    const keyRef = ref(db, `admin/auth/${currentGame}/${currentKey}`);
+    const snapshot = await get(keyRef);
+
+    if (snapshot.exists() && snapshot.val() === true) {
+      const modal = document.getElementById('auth-modal');
+      modal.classList.add('hiding');
+      setTimeout(() => {
+        modal.style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        if(!muted) SFX.online();
+      }, 600);
+      document.getElementById('conn-info').textContent = `Licensed to ${currentUser} · ${currentGame}`;
+      initFirebaseC2();
+    } else {
+      alert("ACCESS DENIED: Invalid or Expired License Key!");
+      authBtn.textContent = "Initialize Uplink";
+    }
+  } catch(error) {
+    alert("Database Error: " + error.message);
+    authBtn.textContent = "Initialize Uplink";
+  }
 };
 
 /* ─── TABS ─── */
@@ -761,7 +776,6 @@ window.switchTab = function(tabId, btn) {
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
   document.getElementById(tabId).classList.add('active');
   if(btn) btn.classList.add('active');
-  if(!muted) SFX.click();
 };
 
 /* ─── SFX ─── */
@@ -967,75 +981,43 @@ function renderGames(){
 function initFirebaseC2(){
   onValue(gamesRef, snap => { currentData=snap.val()||{}; renderGames(); });
   setInterval(renderGames, 1000);
-
-  if(currentGame!=="GLOBAL"){
-    onValue(ref(db, `admin/logs/${currentGame}`), snap => {
-      const data=snap.val()||{};
-      const tbody=document.getElementById('log-body');
-      tbody.innerHTML="";
-      const logs=Object.values(data).sort((a,b)=>b.time-a.time).slice(0,50);
-      if(logs.length===0){
-        tbody.innerHTML='<tr><td colspan="5" style="color:var(--text-3);text-align:center;">No recent actions logged.</td></tr>';
-      } else {
-        logs.forEach(log => {
-          const date=new Date(log.time*1000).toLocaleTimeString();
-          const c=log.status.includes("SUCCESS")?"rgba(255,255,255,0.7)":"#ff5555";
-          tbody.innerHTML+=`<tr><td>${date}</td><td style="font-weight:600;color:var(--text);">${log.admin}</td><td style="color:var(--text-3);">${log.cmd}</td><td>${log.tgt}</td><td style="color:${c};">${log.status}</td></tr>`;
-        });
-      }
-    });
-  }
-
-  onValue(ref(db,'admin/global_whitelist'), snap => {
-    const data=snap.val()||{};
-    const tbody=document.getElementById('wl-body');
-    tbody.innerHTML="";
-    const entries=Object.entries(data).filter(([,v])=>v===true);
-    if(entries.length===0){
-      tbody.innerHTML='<tr><td colspan="3" style="color:var(--text-3);text-align:center;">No admins in database.</td></tr>';
-      return;
-    }
-    entries.forEach(([user])=>{
-      tbody.innerHTML+=`<tr><td style="font-weight:600;color:var(--text);">${user}</td><td style="color:var(--text-3);">Full Administrator</td><td><button class="btn-revoke" onclick="removeAdmin('${user}')">Revoke</button></td></tr>`;
-    });
-  });
 }
 
-window.addAdmin = function(){
-  const inp=document.getElementById('new-admin');
-  const user=inp.value.trim();
-  if(!user) return;
-  set(ref(db,`admin/global_whitelist/${user}`),true).then(()=>{ inp.value=''; }).catch(err=>alert("DB error: "+err.message));
+/* ─── TERMINAL ─── */
+window.clearTerminal = function() {
+  document.getElementById('term-out').innerHTML = `
+    <div class="term-line" style="color:var(--text-3)">AdminPlus Shell v2.0 · Connected</div>
+    <div class="term-line" style="color:var(--text-3);margin-bottom:10px;">Terminal cleared.</div>
+  `;
 };
 
-window.removeAdmin = function(user){
-  if(confirm(`Revoke access for ${user}?`))
-    remove(ref(db,`admin/global_whitelist/${user}`)).catch(err=>alert("DB error: "+err.message));
+window.executeCmd = function(){
+  const inp = document.getElementById('term-in');
+  const input = inp.value.trim();
+  inp.value = '';
+  if(!input) return;
+
+  const out = document.getElementById('term-out');
+  out.innerHTML += `<div class="term-line"><span style="color:var(--accent);">[c2@shell]</span> ${input}</div>`;
+
+  const parts = input.split(" "), cmd = parts[0].toLowerCase(), target = parts[1]||"", args = parts.slice(2).join(" ");
+  const valid = ["kick","kill","freeze","announce","shutdown","require"];
+
+  if(!valid.includes(cmd)){
+    out.innerHTML += `<div class="term-line" style="color:#ff5555;">Error: Unknown command.</div>`;
+  } else {
+    out.innerHTML += `<div class="term-line" style="color:var(--text-3);">Compiling payload and transmitting...</div>`;
+    const payload = { command:cmd, targetPlayer:target, args, adminName:currentUser, licenseKey:currentKey, targetServer:currentGame, timestamp:Math.floor(Date.now()/1000) };
+    const queueTarget = currentGame === "GLOBAL" ? "GLOBAL_QUEUE" : currentGame;
+    push(ref(db, `admin/queue/${queueTarget}`), payload)
+      .then(()=>{ out.innerHTML += `<div class="term-line" style="color:#00ff88;">Payload injected successfully. Waiting for server ACK...</div>`; })
+      .catch(err=>{ out.innerHTML += `<div class="term-line" style="color:#ff5555;">Transmission failed: ${err.message}</div>`; });
+  }
+  out.scrollTop = out.scrollHeight;
 };
 
 window.handleCommand = function(e){
-  if(e.key!=='Enter') return;
-  const input=e.target.value.trim();
-  e.target.value='';
-  if(!input) return;
-
-  const out=document.getElementById('term-out');
-  out.innerHTML+=`<div class="term-line"><span style="color:var(--text-3);">[c2@shell]</span> ${input}</div>`;
-
-  const parts=input.split(" "), cmd=parts[0].toLowerCase(), target=parts[1]||"", args=parts.slice(2).join(" ");
-  const valid=["kick","kill","freeze","announce","shutdown","require"];
-
-  if(!valid.includes(cmd)){
-    out.innerHTML+=`<div class="term-line" style="color:#ff5555;">Error: Unknown command.</div>`;
-  } else {
-    out.innerHTML+=`<div class="term-line" style="color:var(--text-3);">Compiling payload…</div>`;
-    const payload={ command:cmd, targetPlayer:target, args, adminName:currentUser, licenseKey:currentKey, targetServer:currentGame, timestamp:Math.floor(Date.now()/1000) };
-    const queueTarget=currentGame==="GLOBAL"?"GLOBAL_QUEUE":currentGame;
-    push(ref(db,`admin/queue/${queueTarget}`), payload)
-      .then(()=>{ out.innerHTML+=`<div class="term-line" style="color:rgba(255,255,255,0.6);">Payload injected successfully.</div>`; })
-      .catch(err=>{ out.innerHTML+=`<div class="term-line" style="color:#ff5555;">Transmission failed: ${err.message}</div>`; });
-  }
-  out.scrollTop=out.scrollHeight;
+  if(e.key === 'Enter') window.executeCmd();
 };
 </script>
 </body>
