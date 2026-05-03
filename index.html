@@ -1075,14 +1075,24 @@ window.clearTerminal = function() {
   `;
 };
 
-window.executeCmd = function(){
+window.executeCmd = async function() {
   const inp = document.getElementById('term-in');
   const input = inp.value.trim();
-  inp.value = '';
   if(!input) return;
+  inp.value = '';
 
   const out = document.getElementById('term-out');
   out.innerHTML += `<div class="term-line"><span style="color:var(--accent);">[c2@shell]</span> ${input}</div>`;
+
+  // NEW: Fetch latest keys from Firebase BEFORE sending
+  // This prevents the 20-second rotation from breaking your session
+  const authSnap = await get(ref(db, `admin/auth/${currentGame}`));
+  if (!authSnap.exists()) {
+    out.innerHTML += `<div class="term-line" style="color:#ff5555;">Error: Failed to sync security keys.</div>`;
+    return;
+  }
+  const latestKeys = authSnap.val().keys;
+  const freshKey = Array.isArray(latestKeys) ? latestKeys[0] : Object.values(latestKeys)[0];
 
   const parts = input.split(" "), cmd = parts[0].toLowerCase(), target = parts[1]||"", args = parts.slice(2).join(" ");
   const valid = ["kick","kill","freeze","announce","shutdown","require"];
@@ -1090,12 +1100,20 @@ window.executeCmd = function(){
   if(!valid.includes(cmd)){
     out.innerHTML += `<div class="term-line" style="color:#ff5555;">Error: Unknown command.</div>`;
   } else {
-    out.innerHTML += `<div class="term-line" style="color:var(--text-3);">Compiling payload and transmitting...</div>`;
-    const payload = { command:cmd, targetPlayer:target, args, adminName:currentUser, licenseKey:currentKey, targetServer:currentGame, timestamp:Math.floor(Date.now()/1000) };
+    const payload = { 
+      command: cmd, 
+      targetPlayer: target, 
+      args, 
+      adminName: currentUser, 
+      licenseKey: freshKey, // Use the fresh key we just fetched
+      targetServer: currentGame, 
+      timestamp: Math.floor(Date.now()/1000) 
+    };
+
     const queueTarget = currentGame === "GLOBAL" ? "GLOBAL_QUEUE" : currentGame;
     push(ref(db, `admin/queue/${queueTarget}`), payload)
-      .then(()=>{ out.innerHTML += `<div class="term-line" style="color:#00ff88;">Payload injected successfully. Waiting for server ACK...</div>`; })
-      .catch(err=>{ out.innerHTML += `<div class="term-line" style="color:#ff5555;">Transmission failed: ${err.message}</div>`; });
+      .then(()=>{ out.innerHTML += `<div class="term-line" style="color:#00ff88;">Payload transmitted.</div>`; })
+      .catch(err=>{ out.innerHTML += `<div class="term-line" style="color:#ff5555;">Failed: ${err.message}</div>`; });
   }
   out.scrollTop = out.scrollHeight;
 };
